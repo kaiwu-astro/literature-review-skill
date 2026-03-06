@@ -45,6 +45,7 @@ class Domain(Enum):
     CS = "cs"
     ENGINEERING = "engineering"
     SOCIAL = "social"
+    ASTRONOMY = "astronomy"
     GENERAL = "general"
 
     @classmethod
@@ -55,6 +56,7 @@ class Domain(Enum):
             'cs': [cls.CS, 'computer_science', 'machine_learning', 'ai'],
             'engineering': [cls.ENGINEERING, 'physical', 'physics'],
             'social': [cls.SOCIAL, 'social_science', 'humanities'],
+            'astronomy': [cls.ASTRONOMY, 'astrophysics', 'cosmology', 'astro'],
             'general': [cls.GENERAL, 'default', 'other']
         }
 
@@ -315,6 +317,34 @@ class PromptTemplateManager:
 请以JSON格式返回评分：
 {"scores": {"dimension1": 2, ...}, "total_score": 10, "rationale": "..."}"""
 
+        # 天文学模板（观测/理论/模拟 + 仪器 + 天体对象 + 红移范围）
+        elif domain == 'astronomy':
+            return """请评估以下天文/天体物理论文的相关性和质量。
+
+# 研究问题框架
+- 研究对象: {target_object}
+- 观测/理论/模拟范式: {research_mode}
+- 波段/探测器: {band_or_instrument}
+- 红移或距离范围: {redshift_or_distance}
+
+# 论文信息
+标题: {title}
+摘要: {abstract}
+期刊/会议: {venue}
+年份: {year}
+
+# 评估维度（每项0-3分）
+1. 观测/理论/模拟匹配度
+2. 波段/探测器匹配度（如 JWST/ALMA/VLA/Gaia）
+3. 天体类型匹配度（如 FRB/AGN/星系团/系外行星）
+4. 红移范围或尺度匹配度
+5. 证据链完整性（数据质量、模型约束、统计显著性）
+
+说明：arXiv astro-ph 预印本在本领域具有较高可接受度，不应因“预印本”身份被默认降权。
+
+请以JSON格式返回评分：
+{"scores": {"dimension1": 2, ...}, "total_score": 12, "rationale": "..."}"""
+
         # 通用模板
         else:
             return """请评估以下论文的相关性和质量。
@@ -345,7 +375,7 @@ class PromptTemplateManager:
                 templates.append(file.stem)
 
         # 内置模板
-        templates.extend(['clinical', 'cs', 'engineering', 'social', 'general'])
+        templates.extend(['clinical', 'cs', 'engineering', 'social', 'astronomy', 'general'])
 
         return sorted(set(templates))
 
@@ -396,6 +426,15 @@ def fill_relevance_prompt(domain: str, paper_data: Dict[str, Any]) -> str:
         for field in missing_fields:
             paper_data[field] = paper_data.get(field, "[N/A]")
 
+    # 常见可选变量提供兜底，避免领域模板新增变量导致 fill 报错
+    for optional_field in [
+        'venue', 'year', 'topic',
+        'Population', 'Intervention', 'Comparator', 'Outcome',
+        'task', 'data_type', 'method_category', 'evaluation_metric',
+        'target_object', 'research_mode', 'band_or_instrument', 'redshift_or_distance',
+    ]:
+        paper_data.setdefault(optional_field, "[N/A]")
+
     return template.fill(**paper_data)
 
 
@@ -432,11 +471,16 @@ def detect_domain_and_load_prompt(keywords: List[str],
     social_keywords = ['social', 'society', 'policy', 'economic', 'education',
                       'psychology', 'behavior', 'culture']
 
+    astronomy_keywords = ['astronomy', 'astrophysics', 'cosmology', 'galaxy', 'exoplanet',
+                          'supernova', 'black hole', 'redshift', 'frb', 'gravitational wave',
+                          'jwst', 'gaia', 'sdss', 'lsst', 'astro-ph']
+
     scores = {
         'clinical': sum(1 for kw in clinical_keywords if kw in keyword_text),
         'cs': sum(1 for kw in cs_keywords if kw in keyword_text),
         'engineering': sum(1 for kw in engineering_keywords if kw in keyword_text),
-        'social': sum(1 for kw in social_keywords if kw in keyword_text)
+        'social': sum(1 for kw in social_keywords if kw in keyword_text),
+        'astronomy': sum(1 for kw in astronomy_keywords if kw in keyword_text),
     }
 
     # 选择得分最高的领域

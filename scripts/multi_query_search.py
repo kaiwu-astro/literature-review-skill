@@ -53,6 +53,11 @@ except ImportError:
     search_crossref = None  # type: ignore[assignment]
 
 try:
+    from ads_search import search_ads
+except ImportError:
+    search_ads = None  # type: ignore[assignment]
+
+try:
     from multi_source_abstract import AbstractFetcher
 except ImportError:
     AbstractFetcher = None  # type: ignore[assignment]
@@ -424,7 +429,7 @@ def _search_one_query_with_fallback(
 
     attempts: list[ProviderAttempt] = []
     chosen_provider = ""
-    supported_providers = {"openalex", "semantic_scholar", "crossref"}
+    supported_providers = {"openalex", "semantic_scholar", "crossref", "ads"}
 
     def _check_provider_available(p: str) -> tuple[bool, str]:
         if detector is None:
@@ -467,6 +472,15 @@ def _search_one_query_with_fallback(
                 cache_dir=cache_dir,
                 retry=retry,
                 mailto=mailto,
+            )
+        if provider == "ads":
+            if search_ads is None:
+                raise RuntimeError("ads_search 未就绪（缺少模块）")
+            return search_ads(
+                query=query,
+                max_results=max_results,
+                cache_dir=cache_dir,
+                retry=retry,
             )
         raise RuntimeError(f"不支持的 provider: {provider}")
 

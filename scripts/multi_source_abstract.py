@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import json
+import os
 import re
 import time
 import urllib.error
@@ -54,11 +55,19 @@ BIOMED_KEYWORDS = {
     "细胞", "分子", "遗传", "病毒", "细菌", "感染", "健康", "患者"
 }
 
+ASTRO_KEYWORDS = {
+    "astronomy", "astrophysics", "cosmology", "galaxy", "exoplanet", "supernova",
+    "black hole", "redshift", "dark matter", "gravitational wave", "jwst", "alma",
+    "frb", "fast radio burst", "quasar", "agn", "pulsar", "neutron star", "cmb",
+    "spectroscopy", "photometry", "gaia", "sdss", "lsst", "telescope", "astro-ph",
+}
+
 # API 端点配置
 SEMANTIC_SCHOLAR_API = "https://api.semanticscholar.org/graph/v1/paper"
 PUBMED_API = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
 CROSSREF_API = "https://api.crossref.org/works"
 OPENALEX_API = "https://api.openalex.org/works"
+ADS_API = "https://api.adsabs.harvard.edu/v1/search/query"
 
 
 # ============================================================================
@@ -89,6 +98,13 @@ def _is_biomedical_topic(topic: str) -> bool:
         return False
     topic_lower = topic.lower()
     return any(keyword in topic_lower for keyword in BIOMED_KEYWORDS)
+
+
+def _is_astronomy_topic(topic: str) -> bool:
+    if not topic:
+        return False
+    topic_lower = topic.lower()
+    return any(keyword in topic_lower for keyword in ASTRO_KEYWORDS)
 
 
 def _clean_abstract(text: str) -> str:
@@ -331,6 +347,30 @@ def _fetch_from_openalex_by_doi(doi: str, timeout: int, *, cache: Optional[Any] 
     return None
 
 
+def _fetch_from_ads(doi: str, timeout: int, *, cache: Optional[Any] = None) -> Optional[str]:
+    if not doi:
+        return None
+    token = os.environ.get("ADS_API_TOKEN", "").strip()
+    if not token:
+        return None
+    normalized_doi = _normalize_doi(doi)
+    q = f'doi:"{normalized_doi}"'
+    params = {
+        "q": q,
+        "rows": 1,
+        "fl": "abstract",
+    }
+    full_url = f"{ADS_API}?{urllib.parse.urlencode(params)}"
+    headers = {"Authorization": f"Bearer {token}"}
+    data = _make_request(full_url, timeout, headers=headers, cache=cache)
+    docs = ((data.get("response") or {}).get("docs") or []) if isinstance(data, dict) else []
+    if docs and isinstance(docs[0], dict):
+        abstract = str(docs[0].get("abstract") or "").strip()
+        if abstract:
+            return _clean_abstract(abstract)
+    return None
+
+
 # ============================================================================
 # 统计数据类
 # ============================================================================
@@ -344,6 +384,7 @@ class FetchStatistics:
     pubmed_success: int = 0
     crossref_success: int = 0
     openalex_fallback_success: int = 0
+    ads_success: int = 0
     total_success: int = 0
     total_failed: int = 0
 
@@ -355,7 +396,8 @@ class FetchStatistics:
             "pubmed_enriched": self.pubmed_success,
             "crossref_enriched": self.crossref_success,
             "openalex_fallback_enriched": self.openalex_fallback_success,
-            "total_enriched": self.semantic_scholar_success + self.pubmed_success + self.crossref_success + self.openalex_fallback_success,
+            "ads_enriched": self.ads_success,
+            "total_enriched": self.semantic_scholar_success + self.pubmed_success + self.crossref_success + self.openalex_fallback_success + self.ads_success,
             "final_coverage": f"{(self.total_success / max(1, self.total_papers) * 100):.1f}%",
             "total_failed": self.total_failed,
         }
@@ -370,6 +412,7 @@ class FetchStatistics:
             f"  Enriched from PubMed: {d['pubmed_enriched']}\n"
             f"  Enriched from Crossref: {d['crossref_enriched']}\n"
             f"  Enriched from OpenAlex fallback: {d['openalex_fallback_enriched']}\n"
+            f"  Enriched from ADS: {d['ads_enriched']}\n"
             f"  Total enriched: {d['total_enriched']}\n"
             f"  Final coverage: {d['final_coverage']}\n"
             f"  Total failed: {d['total_failed']}"
@@ -437,9 +480,12 @@ class AbstractFetcher:
             API 函数列表（按优先级排序）
         """
         is_biomed = _is_biomedical_topic(topic)
+        is_astro = _is_astronomy_topic(topic)
 
         # 主来源（最多取 N 个），OpenAlex fallback 始终追加在末尾
         primary: list[Callable[[str, int], Optional[str]]] = []
+        if is_astro:
+            primary.append(partial(_fetch_from_ads, cache=self._cache))
         if self.enable_crossref:
             primary.append(partial(_fetch_from_crossref, cache=self._cache))
         if self.enable_semantic_scholar:
@@ -487,6 +533,8 @@ class AbstractFetcher:
                     self._stats.crossref_success += 1
                 elif "openalex_by_doi" in func_name:
                     self._stats.openalex_fallback_success += 1
+                elif "ads" in func_name:
+                    self._stats.ads_success += 1
                 self._stats.total_success += 1
                 return abstract
 

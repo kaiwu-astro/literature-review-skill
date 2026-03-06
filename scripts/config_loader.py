@@ -78,14 +78,21 @@ def _apply_env_overrides(config: Dict[str, Any]) -> Dict[str, Any]:
         api_cfg = config.setdefault('api', {})
         ss_cfg = api_cfg.setdefault('semantic_scholar', {})
         oa_cfg = api_cfg.setdefault('openalex', {})
+        ads_cfg = api_cfg.setdefault('ads', {})
         ss_cfg['timeout'] = timeout
         oa_cfg['timeout'] = timeout
+        ads_cfg['timeout'] = timeout
 
     if 'SLR_RATE_LIMIT' in os.environ:
         rate_limit = int(os.environ['SLR_RATE_LIMIT'])
         api_cfg = config.setdefault('api', {})
         ss_cfg = api_cfg.setdefault('semantic_scholar', {})
         ss_cfg['rate_limit'] = rate_limit
+
+    if 'ADS_API_TOKEN' in os.environ:
+        api_cfg = config.setdefault('api', {})
+        ads_cfg = api_cfg.setdefault('ads', {})
+        ads_cfg['token'] = os.environ['ADS_API_TOKEN']
 
     return config
 

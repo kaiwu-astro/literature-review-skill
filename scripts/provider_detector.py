@@ -64,7 +64,7 @@ class ProviderDetector:
             return ProviderStatus(provider="mcp", available=False, reason="MCP 未在脚本环境中启用（可通过 SLR_MCP_AVAILABLE=true 显式声明）")
 
         # 零配置 API：默认认为可用（真正的网络可用性由调用阶段处理）
-        if provider in {"openalex", "semantic_scholar", "crossref", "duckduckgo"}:
+        if provider in {"openalex", "semantic_scholar", "crossref", "ads", "duckduckgo"}:
             return ProviderStatus(provider=provider, available=True, reason="assume available (runtime check)")
 
         return ProviderStatus(provider=provider, available=False, reason="unknown provider")
@@ -72,7 +72,7 @@ class ProviderDetector:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="检测检索 provider 的可用性（轻量）")
-    parser.add_argument("--providers", nargs="+", default=["mcp", "openalex", "semantic_scholar", "crossref"])
+    parser.add_argument("--providers", nargs="+", default=["mcp", "ads", "openalex", "semantic_scholar", "crossref"])
     parser.add_argument("--ttl", type=int, default=300)
     args = parser.parse_args()
 
@@ -88,4 +88,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

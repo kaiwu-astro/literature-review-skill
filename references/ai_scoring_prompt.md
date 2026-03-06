@@ -12,12 +12,12 @@
   - ✅ AI 语义理解更准确
   - ✅ 评分区分度更高
   - ✅ 子主题分组更精准
-  - 示例：`"deep learning for benign-malignant classification of breast ultrasound lesions"`
+  - 示例：`"Fast radio bursts: origins and emission mechanisms"`
 
 - **中文主题（支持）**：
   - ✅ AI 可直接理解中文主题
   - ⚠️ 可能需要更详细的 Prompt 说明
-  - 示例：`"深度学习在乳腺超声结节良恶性鉴别中的应用"`
+  - 示例：`"快速射电暴（FRB）起源机制与辐射模型"`
 
 - **主题语言选择原则**：
   - 如果论文标题/摘要主要为英文 → 使用英文主题
@@ -34,7 +34,7 @@
 ## 单篇评分 Prompt
 
 ```markdown
-你是一位学术文献评审专家，精通医学影像与深度学习领域。请评估以下论文与给定研究主题的相关性。
+你是一位学术文献评审专家，精通天文学与天体物理。请评估以下论文与给定研究主题的相关性。
 
 ## 研究主题
 **主题**: {topic}
@@ -54,22 +54,22 @@
 ## 评分维度（请综合考虑）
 
 ### 1. 任务匹配度 (Task Alignment)
-- 是否研究相同的临床问题？
-  - 完全匹配：相同疾病、相同诊断任务
-  - 部分匹配：相同疾病但任务不同
-  - 不匹配：不同疾病或领域
+- 是否研究相同的天体物理问题？
+  - 完全匹配：相同天体对象、相同科学问题
+  - 部分匹配：相同对象但机制/方法不同
+  - 不匹配：不同天体对象或不同子领域
 
 ### 2. 方法匹配度 (Method Alignment)
-- 是否使用相似的技术方法？
-  - 完全匹配：相同深度学习架构/方法
+- 是否采用可比的观测/理论/模拟方法？
+  - 完全匹配：相同观测管线/理论模型/模拟框架
   - 部分匹配：同大类但不同具体方法
-  - 不匹配：完全不同方法（如传统机器学习 vs 深度学习）
+  - 不匹配：完全不同方法（如仅仪器描述 vs 物理机制研究）
 
-### 3. 数据模态 (Data Modality)
-- 是否使用相同的医学影像模态？
-  - 完全匹配：如都是乳腺超声
-  - 部分匹配：如乳腺钼靶 vs 乳腺超声
-  - 不匹配：完全不同模态
+### 3. 波段/探测器匹配度 (Band/Instrument Alignment)
+- 是否使用相同的观测波段与探测器配置？
+  - 完全匹配：如都使用射电巡天数据
+  - 部分匹配：如光学光谱 vs 射电时域
+  - 不匹配：完全不同观测窗口
 
 ### 4. 应用价值 (Relevance Value)
 - 对主题研究是否有直接参考价值？
@@ -81,13 +81,15 @@
 
 ## 评分标准（1-10分，保留1位小数）
 
+> 天文学场景说明：arXiv astro-ph 预印本不因“预印本身份”默认降权，应按证据质量与主题匹配度评分。
+
 | 分数区间 | 相关性等级 | 描述 | 典型案例 |
 |---------|-----------|------|----------|
-| **9.0-10.0** | 完美匹配 | 相同任务 + 相同方法 + 相同模态 | 乳腺超声 + CNN 分类 vs 乳腺超声 + CNN 分类 |
-| **7.0-8.9** | 高度相关 | 相同任务，方法/模态略有差异 | 乳腺超声 + CNN vs 乳腺超声 + Transformer |
-| **5.0-6.9** | 中等相关 | 同领域但任务/方法/模态有显著差异 | 乳腺钼靶 + CNN vs 乳腺超声 + CNN |
-| **3.0-4.9** | 弱相关 | 仅部分概念或技术重叠 | 甲状腺超声 + CNN vs 乳腺超声 + CNN |
-| **1.0-2.9** | 几乎无关 | 仅背景层面有宽泛关联 | 自然图像分类 vs 乳腺超声分类 |
+| **9.0-10.0** | 完美匹配 | 相同任务 + 相同方法 + 相同模态 | FRB 起源机制 + 射电观测约束 vs FRB 起源机制 + 射电观测约束 |
+| **7.0-8.9** | 高度相关 | 相同任务，方法/模态略有差异 | FRB 观测约束 + 磁星模型 vs FRB 观测约束 + 双星并合模型 |
+| **5.0-6.9** | 中等相关 | 同领域但任务/方法/模态有显著差异 | AGN 吸积盘模型 vs FRB 起源机制 |
+| **3.0-4.9** | 弱相关 | 仅部分概念或技术重叠 | 恒星耀发统计 vs FRB 起源机制 |
+| **1.0-2.9** | 几乎无关 | 仅背景层面有宽泛关联 | 通用机器学习论文 vs FRB 天体物理研究 |
 
 ---
 
@@ -275,7 +277,7 @@
 ### 示例 1：完美匹配（9.5分）
 
 **输入**：
-- 主题: "深度学习在乳腺超声结节良恶性鉴别中的应用"
+- 主题: "快速射电暴（FRB）起源机制与辐射模型"
 - 标题: "Deep Learning for Automated Classification of Benign and Malignant Breast Ultrasound Lesions Using ResNet50"
 - 摘要: "This paper proposes a ResNet50-based deep learning model for classifying breast ultrasound lesions into benign and malignant categories. We collected 2000 ultrasound images from 500 patients and achieved 95% accuracy..."
 
@@ -302,7 +304,7 @@
 ### 示例 2：高度相关（8.0分）
 
 **输入**：
-- 主题: "深度学习在乳腺超声结节良恶性鉴别中的应用"
+- 主题: "快速射电暴（FRB）起源机制与辐射模型"
 - 标题: "Vision Transformer for Breast Lesion Classification in Ultrasound Images"
 - 摘要: "We propose a Vision Transformer (ViT) based approach for breast ultrasound lesion classification..."
 
@@ -329,7 +331,7 @@
 ### 示例 3：中等相关（6.0分）
 
 **输入**：
-- 主题: "深度学习在乳腺超声结节良恶性鉴别中的应用"
+- 主题: "快速射电暴（FRB）起源机制与辐射模型"
 - 标题: "Deep Learning for Breast Cancer Detection in Mammography Images"
 - 摘要: "We develop a CNN model for breast cancer detection in screening mammograms..."
 
@@ -356,7 +358,7 @@
 ### 示例 4：弱相关（3.5分）
 
 **输入**：
-- 主题: "深度学习在乳腺超声结节良恶性鉴别中的应用"
+- 主题: "快速射电暴（FRB）起源机制与辐射模型"
 - 标题: "Thyroid Nodule Classification Using Deep Convolutional Neural Networks"
 - 摘要: "We propose a CNN-based method for thyroid nodule classification in ultrasound images..."
 
@@ -383,7 +385,7 @@
 ### 示例 5：几乎无关（2.0分）
 
 **输入**：
-- 主题: "深度学习在乳腺超声结节良恶性鉴别中的应用"
+- 主题: "快速射电暴（FRB）起源机制与辐射模型"
 - 标题: "Natural Image Classification Using Deep Neural Networks"
 - 摘要: "We apply deep learning to classify natural images from ImageNet..."
 

@@ -54,6 +54,7 @@ search:
   # 检索源优先级（按顺序尝试，失败则自动降级）
   provider_priority:
     - "mcp"                # 用户配置了且可用 → 最佳体验（由宿主能力提供）
+    - "ads"                # 天文/天体物理主力（需 ADS token）
     - "openalex"           # 主力（零配置、无官方速率限制）
     - "semantic_scholar"   # 语义增强（零配置但有速率限制）
     - "crossref"           # DOI 权威验证/兜底（零配置）
@@ -277,6 +278,10 @@ api:
   crossref:
     base_url: "https://api.crossref.org"
     timeout: 10
+  ads:
+    base_url: "https://api.adsabs.harvard.edu/v1"
+    timeout: 15
+    token: ""   # 可留空；优先使用环境变量 ADS_API_TOKEN
 
 # ============================================================================
 # 目录与输出
@@ -319,6 +324,7 @@ scripts:
   compile_pdf: "scripts/compile_latex_with_bibtex.py"
   convert_latex_to_word: "scripts/convert_latex_to_word.py"
   openalex_search: "scripts/openalex_search.py"
+  ads_search: "scripts/ads_search.py"
   pipeline_cost: "scripts/pipeline_cost.py"
 
 # ============================================================================

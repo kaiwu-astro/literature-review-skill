@@ -107,6 +107,16 @@ def _looks_preprint(paper: Dict[str, Any]) -> bool:
     )
 
 
+def _is_astro_arxiv(paper: Dict[str, Any]) -> bool:
+    text = " ".join([
+        str(paper.get("title") or ""),
+        str(paper.get("venue") or ""),
+        str(paper.get("url") or ""),
+        str(paper.get("abstract") or ""),
+    ]).lower()
+    return ("arxiv" in text) and any(k in text for k in ["astro-ph", "astronomy", "astrophysics", "cosmology", "frb", "exoplanet", "galaxy"])
+
+
 def _paper_quality_score(paper: Dict[str, Any]) -> int:
     """
     选择“更正式/更可复用版本”的启发式评分。
@@ -116,7 +126,8 @@ def _paper_quality_score(paper: Dict[str, Any]) -> int:
     doi = _normalize_doi(paper.get("doi") or "")
     if doi:
         score += 10
-    if not _looks_preprint(paper):
+    # 天文学场景下，arXiv astro-ph 预印本在社区中通常可与已发表文献同等看待。
+    if (not _looks_preprint(paper)) or _is_astro_arxiv(paper):
         score += 4
     if paper.get("venue"):
         score += 2

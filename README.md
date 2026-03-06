@@ -2,6 +2,8 @@
 
 本 README 面向**使用者**：如何触发并正确使用 `systematic-literature-review` skill。执行指令与硬性规范在 `SKILL.md`；默认参数在 `config.yaml`。
 
+> 天文/天体物理推荐检索源：**NASA ADS + arXiv (astro-ph)**，并可与 OpenAlex/Crossref 联用。
+
 ## 快速开始
 
 ```
@@ -106,7 +108,7 @@ cache:
 
 | 档位 | 字数范围 | 参考文献数 | 典型场景 | PDF 页数 | 别名 |
 |------|---------|-----------|---------|---------|------|
-| **Premium（旗舰级）** | 10000–15000 | 80–150 | • *Nature Reviews* 级别综述<br>• *Chemical Reviews* 级别综述<br>• 专著式综述 | 16–25 页 | 旗舰级、顶刊级、高级 |
+| **Premium（旗舰级）** | 10000–15000 | 80–150 | • *Annual Review of Astronomy and Astrophysics* 级别综述<br>• *Nature Astronomy* 级别综述<br>• 专著式综述 | 16–25 页 | 旗舰级、顶刊级、高级 |
 | **Standard（标准级）** | 6000–10000 | 50–90 | • 学位论文 Related Work<br>• 普通期刊综述<br>• NSFC 标书立项依据<br>• 项目提案 | 10–16 页 | 标准级、常规 |
 | **Basic（基础级）** | 3000–6000 | 30–60 | • 快速调研<br>• 课程作业<br>• 会议论文 Related Work<br>• 入门了解领域 | 5–10 页 | 快速级、基础级、入门 |
 
@@ -136,7 +138,7 @@ cache:
 
 ### 最小可用
 ```
-请用 systematic-literature-review 做主题"AI for protein design"的文献综述，基础级，近五年英文。
+请用 systematic-literature-review 做主题"Fast radio bursts: origins and mechanisms"的文献综述，基础级，近五年英文。
 ```
 
 ### 指定输出范围

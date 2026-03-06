@@ -71,6 +71,7 @@
 {概念块1} {概念块2} {概念块3}
 {概念块1} {概念块2} site:pubmed.ncbi.nlm.nih.gov
 {概念块1} {概念块2} site:semanticscholar.org
+{概念块1} {概念块2} site:arxiv.org abs astro-ph
 {概念块1} {概念块2} 2023..2025
 ```
 
@@ -147,3 +148,27 @@
 **检索策略**：
 - 不作为主要检索引擎
 - 用于补充核验已有候选文献的 DOI（并把核验结果写入 Search Log）
+
+---
+
+### 辅助工具：NASA ADS（天文/天体物理主力）
+
+**用途**：
+- 天文领域主检索库（观测、理论、模拟全覆盖）
+- 支持 bibcode、机构、基金、数据库链接等字段
+- 与 arXiv/期刊记录关联紧密
+
+**建议参数**：
+```json
+{
+  "q": "(FRB OR \"fast radio burst\") AND (origin OR progenitor)",
+  "rows": 50,
+  "fl": "title,author,year,doi,abstract,bibcode,bibstem,pub",
+  "sort": "date desc"
+}
+```
+
+**检索策略**：
+- 主题词优先使用 IAU 标准术语与缩写
+- 保留巡天/仪器切片（如 Gaia/SDSS/JWST/ALMA）
+- 对预印本补充切片：`arXiv:astro-ph.*`（如 `astro-ph.HE`, `astro-ph.CO`, `astro-ph.GA`）
