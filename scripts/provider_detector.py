@@ -4,6 +4,9 @@ provider_detector.py - 检测检索源是否可用（最小实现）
 
 说明：
   - 本技能的检索实现主要为零配置 API（OpenAlex/Semantic Scholar/Crossref）。
+  - NASA ADS 需要 API token（通过 ADS_API_TOKEN 环境变量或 config.yaml api.ads.token 配置）；
+    未配置 token 时报告为不可用，避免 provider_priority 列表中 ads 在 openalex 之前时
+    产生误导性的“OK”状态并短路后续检索。
   - MCP 属于宿主能力（工具/插件），不一定能在纯 Python 脚本内直接调用；
     因此这里对 MCP 的检测以“环境变量/显式配置”为准，并提供统一的可用性口径，
     以便 multi_query_search 进行自动降级。
@@ -14,8 +17,12 @@ from __future__ import annotations
 import argparse
 import os
 import time
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Dict, List, Optional
+
+
+_CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
 
 
 @dataclass
@@ -63,8 +70,30 @@ class ProviderDetector:
                 return ProviderStatus(provider="mcp", available=True, reason="SLR_MCP_AVAILABLE=true")
             return ProviderStatus(provider="mcp", available=False, reason="MCP 未在脚本环境中启用（可通过 SLR_MCP_AVAILABLE=true 显式声明）")
 
+        if provider == "ads":
+            # ADS 需要 token；先检查环境变量，再检查 config.yaml api.ads.token
+            token = os.environ.get("ADS_API_TOKEN", "").strip()
+            if not token:
+                try:
+                    import yaml  # type: ignore  # yaml 为可选依赖；不可用时跳过 config.yaml 检查
+                    with _CONFIG_PATH.open(encoding="utf-8") as _f:
+                        _cfg = yaml.safe_load(_f) or {}
+                    ads_cfg = _cfg.get("api", {}).get("ads", {})
+                    token = str(ads_cfg.get("token") or "").strip()
+                except ImportError:
+                    pass  # PyYAML 未安装，仅依赖环境变量
+                except Exception:
+                    pass  # config.yaml 不存在或解析失败，仅依赖环境变量
+            if token:
+                return ProviderStatus(provider="ads", available=True, reason="ADS token configured")
+            return ProviderStatus(
+                provider="ads",
+                available=False,
+                reason="ADS token 未配置（请设置环境变量 ADS_API_TOKEN 或在 config.yaml 的 api.ads.token 填入 token）",
+            )
+
         # 零配置 API：默认认为可用（真正的网络可用性由调用阶段处理）
-        if provider in {"openalex", "semantic_scholar", "crossref", "ads", "duckduckgo"}:
+        if provider in {"openalex", "semantic_scholar", "crossref", "duckduckgo"}:
             return ProviderStatus(provider=provider, available=True, reason="assume available (runtime check)")
 
         return ProviderStatus(provider=provider, available=False, reason="unknown provider")
