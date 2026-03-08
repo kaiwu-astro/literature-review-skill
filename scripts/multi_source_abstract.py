@@ -352,6 +352,21 @@ def _fetch_from_ads(doi: str, timeout: int, *, cache: Optional[Any] = None) -> O
         return None
     token = os.environ.get("ADS_API_TOKEN", "").strip()
     if not token:
+        # 尝试从全局配置中获取 ADS token（例如 config.yaml 中的 api.ads.token）
+        try:  # 延迟导入，避免在独立运行时强依赖 config_loader
+            import config_loader  # type: ignore
+
+            api_cfg = getattr(config_loader, "get_api_config", None)
+            if callable(api_cfg):
+                ads_cfg = api_cfg("ads") or {}
+                if isinstance(ads_cfg, dict):
+                    cfg_token = str(ads_cfg.get("token") or "").strip()
+                    if cfg_token:
+                        token = cfg_token
+        except ImportError:
+            # 如果没有 config_loader，则保持 token 为空，沿用原有降级行为
+            pass
+    if not token:
         return None
     normalized_doi = _normalize_doi(doi)
     q = f'doi:"{normalized_doi}"'
