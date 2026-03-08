@@ -116,6 +116,22 @@ DOMAIN_KEYWORDS = {
             "journal of personality", "organizational behavior",
         ],
     },
+    "astronomy": {
+        "primary": [
+            "galaxy", "exoplanet", "supernova", "black hole", "redshift", "cosmology",
+            "dark matter", "gravitational wave", "jwst", "quasar", "agn", "pulsar",
+            "neutron star", "frb", "fast radio burst", "cmb", "interstellar", "astro-ph",
+        ],
+        "secondary": [
+            "metallicity", "accretion", "spectral type", "astrometry", "photometry",
+            "spectroscopy", "light curve", "transit", "radial velocity", "halo", "cluster",
+            "gaia", "sdss", "lsst", "alma", "vlbi", "ifu",
+        ],
+        "journals": [
+            "apj", "astrophysical journal", "a&a", "astronomy & astrophysics", "mnras",
+            "nature astronomy", "araa", "annual review of astronomy and astrophysics",
+        ],
+    },
 }
 
 

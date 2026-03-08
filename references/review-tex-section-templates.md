@@ -233,3 +233,17 @@
 
 > 数据来源说明：默认正文基于检索元数据生成，未自动下载 PDF 全文。若需全文补强，优先对关键引用下载/阅读，再增加方法细节、效应量与局限描述。
 > 若可获取摘要（默认从 OpenAlex 重组），写作时应充分使用摘要中的方法/结果/局限，不要只停留在标题层面。
+
+---
+
+## Astronomy/Astrophysics 段落模板（补充）
+
+```tex
+\paragraph{Fast radio bursts (FRBs).}
+Recent surveys suggest that repeating and apparently non-repeating FRBs may share partially overlapping progenitor channels, while their burst-energy distributions and local environments remain statistically distinct \cite{CHIME2020,Petroff2019}.
+```
+
+```tex
+\paragraph{Acronyms.}
+We use standard abbreviations after first mention: fast radio burst (FRB), active galactic nucleus (AGN), and cosmic microwave background (CMB).
+```
