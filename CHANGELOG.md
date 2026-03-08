@@ -5,8 +5,6 @@ All notable changes to the systematic-literature-review skill will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ### Fixed（检索与摘要补齐的可控性/可复现性 - 2026-01-25）
 
 - `multi_query_search.py`：未提供查询时不再静默回退到硬编码查询，改为直接报错（避免误跑无关主题）
@@ -1777,8 +1775,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 版本说明
 
-- **Unreleased**: 正在开发中的功能
-- **[x.y.z]**: 已发布的版本
+- **[x.y.z]**:
   - x: 主版本号（不兼容的 API 变更）
   - y: 次版本号（向后兼容的功能新增）
   - z: 修订号（向后兼容的问题修正）
