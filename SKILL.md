@@ -59,11 +59,11 @@ metadata:
 
 ## 工作流（7 步 + 字数预算）
 0) **准备与守则**：记录最高原则与目标范围（字数/参考数），确认主题与档位。
-1) **多查询检索**：AI 根据主题特性自主规划查询变体（通常 5-15 组，复杂领域可扩展），无需档位/哨兵/切片硬约束，并行调用 OpenAlex API 获取候选文献，自动去重合并，写 Search Log。恢复/跳转阶段时，若 `papers` 路径缺失或不是 `.jsonl` 文件，自动清理并重新检索。详细查询生成标准见 `references/ai_query_generation_prompt.md`。
+1) **多查询检索**：AI 根据主题特性自主规划查询变体（通常 5-15 组，复杂领域可扩展），无需档位/哨兵/切片硬约束，并行调用 OpenAlex API 获取候选文献，自动去重合并，写 Search Log。恢复/跳转阶段时，若 `papers` 路径缺失或不是 `.jsonl` 文件，自动清理并重新检索。详细查询生成标准见 `skill-references/ai_query_generation_prompt.md`。
 2) **去重**：`dedupe_papers.py`，输出去重结果与映射。
 3) **AI 自主评分 + 数据抽取（一次完成）**：
    - AI 直接使用当前环境进行语义理解评分
-   - 使用 `references/ai_scoring_prompt.md` 中的完整 Prompt
+   - 使用 `skill-references/ai_scoring_prompt.md` 中的完整 Prompt
    - AI 逐篇阅读 `papers_deduped.jsonl` 中的标题和摘要
    - 按以下标准打 1–10 分（保留1位小数）：
      * **9-10分**：完美匹配 - 相同任务 + 相同方法 + 相同模态
@@ -81,7 +81,7 @@ metadata:
      * `alignment`（{task, method, modality}匹配度）
      * `extraction`（{design, key_findings, limitations}）
      * 可选 `skip`（信息不足时使用；即使跳过也应保留完整字段结构）
-   - 详细评分标准与 Prompt 见 `references/ai_scoring_prompt.md`
+   - 详细评分标准与 Prompt 见 `skill-references/ai_scoring_prompt.md`
    - **评分质量验证**：
      * 目标分布：高分20-40%、中分40-60%、低分10-30%
      * 若检索结果本身高度精准，允许偏离目标分布，但需额外复核 4.0-7.0 的边界样本，避免整体虚高
@@ -114,7 +114,7 @@ metadata:
      * ❌ "陈述观点 + 堆砌 2-3 篇文献"："多项研究表明\cite{Paper1,Paper2,Paper3}。"
      * ❌ 单次引用 >4 个 key（<5% 情况，仅限综述性陈述）
    - **验证要求**：写作完成后运行 `scripts/validate_citation_distribution.py --verbose`，如单篇引用 <65% 必须修正
-   - 详见 `references/expert-review-writing.md` 的"引用分布约束"章节
+   - 详见 `skill-references/expert-review-writing.md` 的"引用分布约束"章节
 8) **有机扩写 + 校验与导出**：若 `validate_counts.py` 判定字数不足，则仅在最短/缺证据的子主题段内按配额进行"增量扩写"（保持原主张与引用不变，只补证据/局限/衔接），补后再跑校验；`validate_review_tex.py` 对章节/引用大小写不敏感且提供可解释提示；如有 `word_budget_final.csv` 可选跑 `validate_word_budget.py`；通过后 `compile_latex_with_bibtex.py` 自动回退/同步模板与 `.bst` 后生成 PDF，`convert_latex_to_word.py` 生成 Word。
 9) **多语言翻译与编译（可选）**：如果用户指定了目标语言（如"日语综述"、"德语综述"）：
    - 使用 `multi_language.py` 处理全流程（语言检测、翻译、编译）
@@ -124,7 +124,7 @@ metadata:
    - **智能修复编译**：循环编译直到成功或触发终止条件（循环检测、超时、不可修复错误）
    - **失败兜底**：输出错误报告 + broken 文件；建议在编译时加 `--auto-restore` 自动回滚到编译前备份，或手动用 `--restore` 恢复备份
    - **支持语言**：en（英语）、zh（中文）、ja（日语）、de（德语）、fr（法语）、es（西班牙语）
-   - **详见**：`references/multilingual-guide.md`
+   - **详见**：`skill-references/multilingual-guide.md`
 
 ## 输出（保持 6 件套）
 | 类型 | 文件 | 说明 |
@@ -267,7 +267,7 @@ cost_tracking:
 **⚠️ 重要说明：阶段3 AI 评分需要 Skill 交互模式**
 
 - Pipeline 的阶段3不支持自动评分，需要通过 Skill 交互模式完成
-- AI（你）直接使用 `references/ai_scoring_prompt.md` 中的 Prompt 评分
+- AI（你）直接使用 `skill-references/ai_scoring_prompt.md` 中的 Prompt 评分
 - 读取 `papers_deduped.jsonl`，逐篇评分并输出 `scored_papers.jsonl`
 - **AI 评分优势**：语义理解、多语言支持、数据抽取同步完成
 - 评分完成后，使用 `--resume-from 4` 继续后续阶段
@@ -333,7 +333,7 @@ output_path = Path("/tmp/results.json")
 - **摘要格式约束**（写作前必须遵守）：
   "摘要必须是**单一段落**，字数 200–250 字，按'背景→核心发现/趋势→挑战→展望'的结构写作。
   禁止出现'本综述基于 X 条文献'、'最终保留 Z 篇'等 AI 流程泄露描述。
-  详见 references/expert-review-writing.md 的'摘要格式说明'章节。"
+  详见 skill-references/expert-review-writing.md 的'摘要格式说明'章节。"
 
 - **表格样式约束**（写作前必须遵守）：
   "使用 `longtable` 或 `tabular` 环境时，列宽必须基于 `\\textwidth` 按比例分配（所有比例之和 ≤ 1.0）。
@@ -344,10 +344,10 @@ output_path = Path("/tmp/results.json")
   ...
   \\end{longtable}
   ```
-  详见 `references/review-tex-section-templates.md` 的'表格样式最佳实践'章节。"
+  详见 `skill-references/review-tex-section-templates.md` 的'表格样式最佳实践'章节。"
 
 - **AI 评分与子主题分组**（阶段3）：
-  使用 `references/ai_scoring_prompt.md` 中的标准评分流程，逐篇阅读文献并打 1-10 分，同时分配子主题标签。完成后运行质量自检，优先检查分数区分度、子主题收敛情况、4.0-7.0 边界样本和 `skip` 条目完整性；高/中/低分比例可参考 20-40% / 40-60% / 10-30%，但不是脱离检索质量的绝对硬约束。
+  使用 `skill-references/ai_scoring_prompt.md` 中的标准评分流程，逐篇阅读文献并打 1-10 分，同时分配子主题标签。完成后运行质量自检，优先检查分数区分度、子主题收敛情况、4.0-7.0 边界样本和 `skip` 条目完整性；高/中/低分比例可参考 20-40% / 40-60% / 10-30%，但不是脱离检索质量的绝对硬约束。
 
 - **子主题与配额规划**（阶段5）：
   "基于评分结果，自动给出 **3-7 个子主题**（默认目标），并分配段落配额：引言 ~1.5k，讨论/展望各 ~1k，结论 ~0.6k，剩余均分给子主题段（每段 ~1.8–2.2k，随目标总字数自动缩放）。
@@ -371,10 +371,10 @@ output_path = Path("/tmp/results.json")
   "首次出现专有名词时，使用'中文（英文全称，英文缩写）'格式，后续可直接使用英文缩写。
   示例：'免疫检查点抑制剂（Immune checkpoint inhibitor，ICI）'、'卷积神经网络（Convolutional Neural Network，CNN）'。
   常见缩略词如 DNA、RNA、CT、MRI、AI 等可直接使用，无需首次全称展开。
-  详见 references/expert-review-writing.md 的'写作要点'章节。"
+  详见 skill-references/expert-review-writing.md 的'写作要点'章节。"
 
 - **内容分离约束**（写作前必须遵守，防止 AI 流程泄露）：
-  "综述正文必须**完全聚焦领域知识**，禁止出现任何'AI工作流程'描述。具体禁止：❌ 在摘要中写'本综述基于 X 条初检文献、去重后 Y 条、最终保留 Z 篇'；❌ 在引言中写'方法学上，本综述按照检索→去重→评分→选文→写作的管线执行'；❌ 任何提及'检索、去重、相关性评分、选文、字数预算'等元操作的描述。这些方法学信息应放在 `{主题}_工作条件.md` 中。目标是让读者感受不到这是 AI 生成的综述，完全符合传统学术综述惯例。详见 `references/expert-review-writing.md` 的'内容分离原则'章节。"
+  "综述正文必须**完全聚焦领域知识**，禁止出现任何'AI工作流程'描述。具体禁止：❌ 在摘要中写'本综述基于 X 条初检文献、去重后 Y 条、最终保留 Z 篇'；❌ 在引言中写'方法学上，本综述按照检索→去重→评分→选文→写作的管线执行'；❌ 任何提及'检索、去重、相关性评分、选文、字数预算'等元操作的描述。这些方法学信息应放在 `{主题}_工作条件.md` 中。目标是让读者感受不到这是 AI 生成的综述，完全符合传统学术综述惯例。详见 `skill-references/expert-review-writing.md` 的'内容分离原则'章节。"
 
 - **引用分布与位置约束**（写作前必须遵守）：
   "**引用必须紧跟着它所支持的观点**，而非堆积在段落末尾。
@@ -394,7 +394,7 @@ output_path = Path("/tmp/results.json")
   **段末堆砌**（<20% 情况）：
      - 仅用于段末总结，前提是段落主体已经充分引用并阐述
 
-  详见 `references/expert-review-writing.md` 的'引用位置约束'和'单篇引用优先'章节。"
+  详见 `skill-references/expert-review-writing.md` 的'引用位置约束'和'单篇引用优先'章节。"
 
 - **写作负面约束**（写作前必须遵守，禁止模式）：
   "以下写作模式被**严格禁止**，违反者将被视为业余水准：
@@ -421,4 +421,4 @@ output_path = Path("/tmp/results.json")
   - 如果段落完整但字数不足：在段落内补充具体证据/数字/反例（有机扩写）
   - 如果确实需要补充背景：拆分为独立子段落，每段 2-5 篇文献
 
-  详见 `references/expert-review-writing.md` 的『写作负面约束』章节。"
+  详见 `skill-references/expert-review-writing.md` 的『写作负面约束』章节。"

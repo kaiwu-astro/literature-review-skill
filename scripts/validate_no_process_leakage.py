@@ -196,7 +196,7 @@ def format_results(results: defaultdict, total_issues: int) -> str:
     output.append("1. 删除综述正文中的上述内容")
     output.append("2. 将方法学信息移至 {主题}_工作条件.md 的相应章节")
     output.append("3. 确保综述正文完全聚焦领域知识")
-    output.append(f"\n详细说明见: references/expert-review-writing.md 的'内容分离原则'章节\n")
+    output.append(f"\n详细说明见: skill-references/expert-review-writing.md 的'内容分离原则'章节\n")
 
     return "\n".join(output)
 

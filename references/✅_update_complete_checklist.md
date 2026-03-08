@@ -12,7 +12,7 @@
   - [x] 写作前提示模板新增 AI 评分说明
 
 ### 新增文件
-- [x] **references/ai_scoring_prompt.md** - AI 评分 Prompt 模板
+- [x] **skill-references/ai_scoring_prompt.md** - AI 评分 Prompt 模板
   - [x] 单篇评分 Prompt（含4个维度、5个分数区间、5个案例）
   - [x] 批量评分 Prompt
   - [x] 质量自检 Prompt
@@ -75,7 +75,7 @@
 执行阶段3时：
 
 ```
-1. 读取 references/ai_scoring_prompt.md
+1. 读取 skill-references/ai_scoring_prompt.md
 2. 逐篇阅读 papers_deduped.jsonl
 3. 按标准打分并分配子主题
 4. 完成后运行质量自检
@@ -165,7 +165,7 @@ python scripts/score_relevance.py --method keyword
 ## 📚 相关文档
 
 - [SKILL.md](../SKILL.md) - 主技能文档
-- [ai_scoring_prompt.md](./ai_scoring_prompt.md) - AI 评分 Prompt 模板
+- [ai_scoring_prompt.md](../skill-references/ai_scoring_prompt.md) - AI 评分 Prompt 模板
 - [CHANGELOG.md](../CHANGELOG.md) - 版本更新记录
 - [v3.0_ai_scoring_summary.md](./v3.0_ai_scoring_summary.md) - 更新总结
 

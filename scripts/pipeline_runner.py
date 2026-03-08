@@ -420,7 +420,7 @@ class PipelineRunner:
         [阶段3] AI 自主评分与子主题分组 + 数据抽取（一次完成）
 
         评分方法：
-        - AI 直接评分（唯一方法）：使用 references/ai_scoring_prompt.md 进行语义理解评分
+        - AI 直接评分（唯一方法）：使用 skill-references/ai_scoring_prompt.md 进行语义理解评分
 
         AI 评分优势：
         - 语义理解：基于任务/方法/模态/应用价值四个维度综合评分
@@ -432,7 +432,7 @@ class PipelineRunner:
         print("\n[阶段3] AI 自主评分与子主题分组 + 数据抽取")
 
         # 读取 AI 评分 Prompt 模板
-        ai_prompt_path = Path(__file__).parent.parent / "references" / "ai_scoring_prompt.md"
+        ai_prompt_path = Path(__file__).parent.parent / "skill-references" / "ai_scoring_prompt.md"
 
         print(f"  AI 评分 Prompt: {ai_prompt_path}")
         print(f"  ⚠️  此阶段需要通过 Skill 交互模式完成")

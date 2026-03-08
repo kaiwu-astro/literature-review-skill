@@ -294,4 +294,4 @@ python scripts/multi_language.py --tex-file review.tex --restore
 
 ### 详细文档
 
-详见 [`references/multilingual-guide.md`](references/multilingual-guide.md)
+详见 [`skill-references/multilingual-guide.md`](skill-references/multilingual-guide.md)

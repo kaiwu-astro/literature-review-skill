@@ -45,7 +45,7 @@
 
 ---
 
-### 2. references/ai_scoring_prompt.md（新增）
+### 2. skill-references/ai_scoring_prompt.md（新增）
 
 完整的 AI 评分 Prompt 模板，包括：
 - 单篇评分 Prompt
@@ -67,7 +67,7 @@ def main():
         print(json.dumps({
             "mode": "ai",
             "message": "AI 评分模式：请让 AI 直接读取 papers_deduped.jsonl 并生成 scored_papers.jsonl",
-            "prompt_template": "见 references/ai_scoring_prompt.md"
+            "prompt_template": "见 skill-references/ai_scoring_prompt.md"
         }, ensure_ascii=False))
         return 0
     else:

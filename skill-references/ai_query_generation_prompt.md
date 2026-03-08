@@ -165,7 +165,7 @@
 ```python
 def run_stage_1_search(self) -> bool:
     # 读取 Prompt 模板
-    prompt_template = Path("references/ai_query_generation_prompt.md").read_text()
+    prompt_template = Path("skill-references/ai_query_generation_prompt.md").read_text()
 
     # 填充参数
     prompt = prompt_template.format(
