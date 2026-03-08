@@ -290,8 +290,8 @@ class PipelineRunner:
             "- **评分分布（高/中/低分段文献数量）**",
             "- **⚠️ 评分分布异常警告（如适用）**：",
             "  - 如果所有文献评分均为 1.0（保底评分），说明评分机制失效",
-            "  - 可能原因：中文主题导致脚本评分无法提取有效 token（v3.6 及更早版本）",
-            "  - 建议：使用 AI 评分（v3.7+）或将主题转为英文",
+            "  - 可能原因：中文主题导致脚本评分无法提取有效 token",
+            "  - 建议：使用 AI 评分或将主题转为英文",
             "- 评分文件路径：`.systematic-literature-review/artifacts/scored_papers_{主题}.jsonl`",
             "## Data Extraction Table（数据抽取表）",
             "- 数据抽取表路径：`.systematic-literature-review/reference/data_extraction_table.md`",
@@ -711,7 +711,7 @@ class PipelineRunner:
             ],
         )
 
-        # 子主题数量验证（v3.4 新增）
+        # 子主题数量验证
         subtopic_ok, subtopic_output = self._run_script_capture_output(
             "validate_subtopic_count.py",
             [

@@ -98,11 +98,11 @@ class SearchLog:
     returned: int
     unique: int
     notes: str = ""
-    # 质量评估字段（v1.1 新增）
+    # 质量评估字段
     dedupe_rate: float = field(default=None)
     quality_score: float = field(default=None)
     quality_label: str = field(default=None)
-    # 多源/降级信息（v1.2 新增）
+    # 多源/降级信息
     provider_used: str = field(default="")
     attempts: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -702,7 +702,7 @@ def multi_search(
 
         all_papers.extend(papers)
 
-        # 质量评估（v1.1 新增）
+        # 质量评估
         quality_score, quality_label = _assess_query_quality(len(papers), unique_count)
         dedupe_rate = unique_count / len(papers) if len(papers) > 0 else 0.0
 
@@ -863,7 +863,7 @@ def main() -> int:
             f.write(json.dumps(paper, ensure_ascii=False) + "\n")
 
     # 写入检索日志
-    # 生成质量汇总（v1.1 新增）
+    # 生成质量汇总
     quality_summary = _generate_quality_summary(logs)
 
     log_data = {
@@ -889,7 +889,7 @@ def main() -> int:
     print(f"  - 输出: {args.output}")
     print(f"  - 日志: {args.search_log}")
 
-    # 质量评估汇总（v1.1 新增）
+    # 质量评估汇总
     qs = log_data.get("quality_summary", {})
     print(f"\n质量评估汇总:")
     print(f"  - 优秀: {qs.get('excellent', 0)} 个")

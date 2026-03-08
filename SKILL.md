@@ -3,7 +3,7 @@ name: systematic-literature-review
 description: 当用户明确要求"做系统综述/文献综述/related work/相关工作/文献调研"时使用。AI 自定检索词，多源检索→去重→AI 逐篇阅读并评分（1–10分语义相关性与子主题分组）→按高分优先比例选文→自动生成"综/述"字数预算→资深领域专家自由写作（固定摘要/引言/子主题/讨论/展望/结论），保留正文字数与参考文献数硬校验，强制导出 PDF 与 Word。支持多语言翻译与智能编译（en/zh/ja/de/fr/es）。
 
 metadata:
-  author: Bensz Conan
+  author: Bensz Conan + kaiwu-astro
   short-description: 相关性评分驱动的系统综述流水线（LaTeX+BibTeX，PDF/Word 强制，支持多语言）
   keywords:
     - 文献综述
@@ -27,9 +27,6 @@ metadata:
     - multilingual
     - 翻译
     - translation
-    - 日语综述
-    - 德语综述
-    - 法语综述
 ---
 
 # Systematic Literature Review
@@ -153,14 +150,14 @@ metadata:
 - \cite 与 BibTeX key 必须一致；缺失即报错
 
 ## 健壮性与日志
-- 模板与 `.bst`：使用 `TEXINPUTS`/`BSTINPUTS` 环境变量引用 `latex-template/` 目录，不再复制模板文件到工作目录（v3.5 优化）；可用 `config.yaml.latex.template_path_override` 或 CLI `--template` 覆盖。若 `.bst` 文件缺失，编译将直接报错（v3.6 优化）。
+- 模板与 `.bst`：使用 `TEXINPUTS`/`BSTINPUTS` 环境变量引用 `latex-template/` 目录，不再复制模板文件到工作目录；可用 `config.yaml.latex.template_path_override` 或 CLI `--template` 覆盖。若 `.bst` 文件缺失，编译将直接报错。
 - DOI 链接显示：若 BibTeX 同时包含 `doi` 与 `url`（例如 `url` 为 OpenAlex），PDF 参考文献默认优先显示 `https://doi.org/{doi}`；BibTeX 仍保留原始 `url` 便于追溯。
-- 中间文件清理：默认自动清理 `.aux`、`.bbl`、`.blg`、`.log`、`.out`、`.toc` 等 LaTeX 中间文件（v3.6 优化）；如需保留用于调试，可使用 `--keep-aux` 参数。
+- 中间文件清理：默认自动清理 `.aux`、`.bbl`、`.blg`、`.log`、`.out`、`.toc` 等 LaTeX 中间文件；如需保留用于调试，可使用 `--keep-aux` 参数。
 - Bib 清洗：生成 Bib 时自动转义 `&/%/_/#/$` 等常见 LaTeX 特殊字符，大小写无关去重 key，并为缺失 author/year/journal/doi 填充默认值且输出警告。
 - 恢复路径校验：resume 状态下发现无效 `papers` 路径会清理并重新检索，避免把目录当文件。
 - 导出日志：Pipeline 会输出 tex/bib/template/bst、pdf/word 路径，便于排查。
 - 字数预算：`plan_word_budget.py` 自动生成 3 份 run CSV、均值版 `word_budget_final.csv`，并输出无引用汇总；`validate_word_budget.py` 可选检查列/覆盖率/总字数误差。
-- **验证报告**（v3.3 新增）：阶段6 自动生成 `{主题}_验证报告.md`，汇总字数/引用/章节/引用一致性验证结果，便于事后审查和追溯。
+- **验证报告**：阶段6 自动生成 `{主题}_验证报告.md`，汇总字数/引用/章节/引用一致性验证结果，便于事后审查和追溯。
 - **多源摘要补充**：默认启用（由 `config.yaml:search.abstract_enrichment.enabled` 控制），默认执行时机为 `config.yaml:search.abstract_enrichment.stage=post_selection`（只对 `selected_papers` 补齐，生成 `selected_papers_enriched_{主题}.jsonl`），避免检索阶段对候选库做全局补齐导致慢与 `cache/api` 膨胀；如需切回检索阶段补齐：将 stage 设为 `search` 或对 `openalex_search.py` 显式 `--enrich-abstracts`。详见 `scripts/multi_source_abstract.py`。
 - **证据卡（evidence cards）**：阶段5 可生成 `evidence_cards_{主题}.jsonl`（字段压缩 + 摘要截断），用于写作时“先压缩再写作”，降低上下文占用（配置：`config.yaml:writing.evidence_cards.*`）。
 - **API 缓存**：默认开启（配置：`config.yaml:cache.api.enabled=true`），默认 `mode=minimal`（不缓存 OpenAlex 原始分页响应，避免 cache/api 文件爆炸）；需要更强可复现性时可设为 `mode=full`。
@@ -329,7 +326,7 @@ output_path = Path("/tmp/results.json")
   - 数据抽取：`update_working_conditions_data_extraction.py`
   - 字数预算：`plan_word_budget.py`、`validate_word_budget.py`
   - 校验：`validate_counts.py`、`validate_review_tex.py`
-  - 验证报告：`generate_validation_report.py`（v3.3 新增）
+  - 验证报告：`generate_validation_report.py`
   - 导出：`compile_latex_with_bibtex.py`、`convert_latex_to_word.py`
 
 ## 写作前提示模板（含字数预算）

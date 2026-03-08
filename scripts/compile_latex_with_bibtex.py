@@ -284,7 +284,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
 
     _ensure_bibliographystyle(tex_file, default_style)
 
-    # 设置环境变量引用模板目录（v3.5 优化：不再复制模板文件）
+    # 设置环境变量引用模板目录
     # 说明：template_path 用于“追加搜索目录”（例如用户自定义模板/自定义 bst 的同级目录），
     #      以 TEXINPUTS/BSTINPUTS 的形式参与编译过程；不会改变 review.tex 的内容。
     template_dir = SKILL_ROOT / "latex-template"
@@ -296,7 +296,7 @@ def compile_pdf(tex_file: Path, output_pdf: Path | None, keep_aux: bool, templat
         template_dirs.append(override_dir)
     template_dirs.append(template_dir)
 
-    # 验证 .bst 文件存在于模板目录（v3.6 优化：不再复制到工作目录）
+    # 验证 .bst 文件存在于模板目录
     verified_bsts = _verify_bst_in_template(tex_file, template_dirs)
     if verified_bsts:
         print(f"  ✓ 已验证 .bst 文件：{', '.join([Path(p).name for p in verified_bsts])}", file=sys.stderr)
