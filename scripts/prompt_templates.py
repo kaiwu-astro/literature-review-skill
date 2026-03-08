@@ -343,7 +343,7 @@ class PromptTemplateManager:
 说明：arXiv astro-ph 预印本在本领域具有较高可接受度，不应因“预印本”身份被默认降权。
 
 请以JSON格式返回评分：
-{"scores": {"dimension1": 2, ...}, "total_score": 12, "rationale": "..."}"""
+{{"scores": {{"dimension1": 2, ...}}, "total_score": 12, "rationale": "..."}}"""
 
         # 通用模板
         else:
