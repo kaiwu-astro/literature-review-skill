@@ -1,0 +1,18 @@
+scoring:
+  default_word_range:
+    premium:
+      min: 900
+      max: 1100
+word_budget:
+  ratio:
+    cited: 0.7
+    non_cited: 0.3
+  summary_ratio: 0.55
+  commentary_ratio: 0.45
+  noise_strength: 0.0
+  seeds: [17, 23, 43]
+  tolerance: 0.05
+  outputs:
+    run_pattern: word_budget_run{n}.csv
+    final: word_budget_final.csv
+    non_cited: non_cited_budget.csv
