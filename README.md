@@ -2,11 +2,20 @@
 
 本 README 面向**使用者**：如何触发并正确使用 `systematic-literature-review` skill。执行指令与硬性规范在 `SKILL.md`；默认参数在 `config.yaml`。
 
-> 天文/天体物理推荐检索源：**NASA ADS + arXiv (astro-ph)**，并可与 OpenAlex/Crossref 联用。
+## 运行依赖
+
+### 必须依赖
+
+- **Python 3.9+**：先确认 Python 版本，再在仓库根目录执行 `pip install -r requirements.txt`。
+- **TeX 工具链**：导出 PDF 依赖 `xelatex` 与 `bibtex`。`scripts/compile_latex_with_bibtex.py` 会将二者作为必需工具检查。可直接安装TexLive。
+- **Pandoc**：导出 Word 依赖 `pandoc`。`scripts/convert_latex_to_word.py` 会将其作为必需工具检查。
+- **完整导出要求**：本项目默认交付物同时包含 PDF 和 Word，因此未安装 TeX 工具链或 Pandoc 时，主流水线无法完整完成 `7_export` 阶段。
+
+### 建议依赖
+
+- **`ADS_API_TOKEN`**：配置后可启用 NASA ADS 检索；否则降级到 OpenAlex / Semantic Scholar / Crossref 。
 
 ## 快速开始
-
-(可选：在终端中设置环境变量 `ADS_API_TOKEN=your_nasa_ads_api_token` ，来启用ADS检索，否则会使用OpenAlex)
 
 ### 最小可用
 ```
