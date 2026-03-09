@@ -98,7 +98,7 @@ def extract_cite_keys(tex: str) -> set[str]:
     return keys
 
 
-def load_thresholds(config: dict, review_level: str, override_words: Optional[int], override_cites: Optional[int]) -> Tuple[int, int]:
+def load_thresholds(config: dict, review_level: str, override_words: Optional[int], override_cites: Optional[int]) -> Tuple[int, int, int, int]:
     validation_cfg = config.get("validation", {}) or {}
     words_cfg = validation_cfg.get("words", {}) or {}
     refs_cfg = validation_cfg.get("references", {}) or {}
