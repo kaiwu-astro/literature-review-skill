@@ -7,9 +7,12 @@
 ### 必须依赖
 
 - **Python 3.9+**：先确认 Python 版本，再在仓库根目录执行 `pip install -r requirements.txt`。
-- **TeX 工具链**：导出 PDF 依赖 `xelatex` 与 `bibtex`。`scripts/compile_latex_with_bibtex.py` 会将二者作为必需工具检查。可直接安装TexLive。
-- **Pandoc**：导出 Word 依赖 `pandoc`。`scripts/convert_latex_to_word.py` 会将其作为必需工具检查。
-- **完整导出要求**：本项目默认交付物同时包含 PDF 和 Word，因此未安装 TeX 工具链或 Pandoc 时，主流水线无法完整完成 `7_export` 阶段。
+
+### 可选依赖（仅当配置要求对应导出时需要）
+
+- **TeX 工具链**：导出 PDF 依赖 `xelatex` 与 `bibtex`。仅当 `config.yaml: output.export_formats` 包含 `pdf` 时需要。
+- **Pandoc**：导出 Word 依赖 `pandoc`。仅当 `config.yaml: output.export_formats` 包含 `word` 时需要。
+- 默认配置（`export_formats: [markdown]`）仅需 Python 依赖，无需 TeX/Pandoc 即可完整运行。
 
 ### 建议依赖
 
@@ -62,19 +65,21 @@
 
 ## 设计理念
 - AI 自定检索词 → 去重 → 标题/摘要 1–10 分相关性与子主题自动分组 → 高分优先选文 → **自动生成"综/述"字数预算（70% 引用段 + 30% 无引用段，3 次采样均值，空 ID 行支持无引用大纲）** → 资深领域专家自由写作。
+- 默认正文格式：**Markdown**（Harvard DOI 引用），可选 **LaTeX**（`\cite` 引用）。由 `config.yaml: output.primary_format` 控制。
+- 导出目标由 `config.yaml: output.export_formats` 驱动：默认仅 `[markdown]`（直接交付，无需外部工具）；可添加 `pdf`（需 TeX）或 `word`（需 Pandoc）。
 - 档位仅影响默认字数/参考范围（可覆盖），支持三档：**Premium（旗舰级）**、**Standard（标准级）**、**Basic（基础级）**。
-- 强制导出 PDF/Word；硬校验：必需章节、字数 min/max、参考文献数 min/max、\cite 与 bib 对齐；可选校验字数预算覆盖率/总和。
+- 硬校验：必需章节、字数 min/max、参考文献数 min/max、引用与参考文献对齐；可选校验字数预算覆盖率/总和。
 - **最高原则**：AI 不得偷懒或短视地为了速度做错误事；不确定必须说明；最终润色仅做衔接与结构调整，不得改动文献题目/摘要所含事实/数字。
 - **稳健性**：恢复状态时校验 `papers` 路径；Bib 自动转义 `&`、补充缺失字段并大小写无关去重 key；模板/`.bst` 缺失会自动回退同步。
-- **多语言支持**：支持将综述翻译为多种语言（en/zh/ja/de/fr/es），自动修复 LaTeX 渲染错误，保留引用和结构不变。详见[多语言支持](#多语言支持)。
+- **多语言支持**：支持将综述翻译为多种语言（en/zh/ja/de/fr/es），自动修复 LaTeX 渲染错误，保留引用和结构不变（当前仅限 LaTeX 格式）。详见[多语言支持](#多语言支持)。
 
 
 # 开发者
 ## 运行与校验
 - 自动流程：`python scripts/pipeline_runner.py --topic "主题" --work-dir runs/主题`  
   阶段：`0_setup → 0.5_subtopics（写作前由 AI 给出并记录） → 1_search → 2_dedupe → 3_score → 4_select → 4.5_word_budget → 5_write → 6_validate（含有机扩写与可选预算校验） → 7_export`
-- 校验：`validate_counts.py`（字数/引用 min/max）、`validate_review_tex.py`（必需章节 + cite/bib 对齐）
-- 导出：`compile_latex_with_bibtex.py {topic}_review.tex {topic}_review.pdf`；`convert_latex_to_word.py ...`；如需自定义模板可在 `config.yaml.latex.template_path_override` 或 CLI `--template` 指定路径（缺失会回退到内置模板并同步 `.bst`）。
+- 校验：`validate_counts.py`（字数/引用 min/max，支持 `--tex` 和 `--md`）、`validate_review_tex.py`（LaTeX 章节 + cite/bib 对齐）、`validate_review_markdown.py`（Markdown 章节 + DOI 引用 + Harvard referencing）
+- 导出：由 `config.yaml: output.export_formats` 驱动；`markdown` 直接交付；`pdf` 需要 `compile_latex_with_bibtex.py`；`word` 需要 `convert_latex_to_word.py`。
 
 ## 关键文件
 - `SKILL.md`：工作流、输入输出、最高原则与硬校验

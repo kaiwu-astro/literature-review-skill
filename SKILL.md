@@ -1,10 +1,10 @@
 ---
 name: systematic-literature-review
-description: 当用户明确要求"做系统综述/文献综述/related work/相关工作/文献调研"时使用。AI 自定检索词，多源检索→去重→AI 逐篇阅读并评分（1–10分语义相关性与子主题分组）→按高分优先比例选文→自动生成"综/述"字数预算→资深领域专家自由写作（固定摘要/引言/子主题/讨论/展望/结论），保留正文字数与参考文献数硬校验，强制导出 PDF 与 Word。支持多语言翻译与智能编译（en/zh/ja/de/fr/es）。
+description: 当用户明确要求"做系统综述/文献综述/related work/相关工作/文献调研"时使用。AI 自定检索词，多源检索→去重→AI 逐篇阅读并评分（1–10分语义相关性与子主题分组）→按高分优先比例选文→自动生成"综/述"字数预算→资深领域专家自由写作（固定摘要/引言/子主题/讨论/展望/结论），保留正文字数与参考文献数硬校验。默认 Markdown 正文 + Harvard DOI 引用，可选导出 PDF/Word。支持多语言翻译与智能编译（en/zh/ja/de/fr/es）。
 
 metadata:
   author: Bensz Conan + kaiwu-astro
-  short-description: 相关性评分驱动的系统综述流水线（LaTeX+BibTeX，PDF/Word 强制，支持多语言）
+  short-description: 相关性评分驱动的系统综述流水线（默认 Markdown + BibTeX，可选 PDF/Word，支持多语言）
   keywords:
     - 文献综述
     - 系统综述
@@ -16,6 +16,7 @@ metadata:
     - 子主题自动分组
     - 高分优先
     - LaTeX
+    - Markdown
     - BibTeX
     - PDF
     - Word
@@ -41,7 +42,8 @@ metadata:
 - 学术规范（Academic Standards）：严格遵循学术语气，确保引用准确。
 
 ## 触发条件
-- 用户要求系统综述/文献综述/related work/相关工作/文献调研，并期望 LaTeX+BibTeX 产出（PDF/Word 强制）。
+- 用户要求系统综述/文献综述/related work/相关工作/文献调研。
+- 默认正文格式：Markdown（`config.yaml: output.primary_format`）；导出目标由 `output.export_formats` 驱动。
 - 默认档位：Premium（旗舰级）；档位仅影响默认正文字数/参考文献数范围（可被用户覆盖）。
   - **Premium（旗舰级）**：10000–15000 字，参考文献 80–150 篇，适用于真正的顶刊综述
   - **Standard（标准级）**：6000–10000 字，参考文献 50–90 篇，适用于学位论文 Related Work、普通期刊综述
@@ -89,10 +91,14 @@ metadata:
 4) **选文**：`select_references.py` 按目标参考范围和高分优先比例（默认 60–80%）选出集合，生成 `selected_papers.jsonl`、`references.bib`、`selection_rationale.yaml`；生成 Bib 时大小写无关去重 key，转义未处理的 `&`，缺失 author/year/journal/doi 用默认值标注后输出警告。若选中文献仍存在摘要缺失/过短，会被标记 `do_not_cite` 并在校验报告中给出“摘要覆盖率”提示（建议写作时不引用或替换）。
 5) **子主题与配额规划（AI 自主）**：基于评分结果自动给出 5–7 个子主题，并分配段落配额：引言约 1.5k，讨论/展望各 ~1k，结论 ~0.6k，剩余均分给子主题段（每段 ~1.8–2.2k，随目标总字数自动缩放），写入工作条件与数据抽取表，作为扩写锚点。
 6) **综/述字数预算**：`plan_word_budget.py` 基于选文与大纲生成 3 份字数预算 CSV（列：文献ID、大纲、综字数、述字数，允许无引用大纲行文献ID为空），对齐均值形成 `word_budget_final.csv`，输出无引用汇总 `non_cited_budget.csv`，并校验总字数与目标差值 ≤5%。
-7) **写作**：资深领域专家风格自由写作，固定章节：摘要、引言、子主题段落（数量自定但遵循配额）、讨论、展望、结论。写作前读取 `word_budget_final.csv`，引用段按文献综/述预算写，无引用段按空 ID 行预算写；引用使用 `\cite{key}`，正文源为 `{topic}_review.tex`。
+7) **写作**：资深领域专家风格自由写作，固定章节：摘要、引言、子主题段落（数量自定但遵循配额）、讨论、展望、结论。写作前读取 `word_budget_final.csv`，引用段按文献综/述预算写，无引用段按空 ID 行预算写。
+
+   **正文格式与引用**（由 `config.yaml: output.primary_format` 决定）：
+   - **Markdown（默认）**：正文为 `{topic}_review.md`；文中引用使用 Harvard referencing 的 Markdown DOI 链接：`[Smith et al. (2023)](https://doi.org/10.xxxx/xxxx)`；双篇分别独立链接，多篇并列用分号分隔；缺 DOI 的文献不进入正文引用（保留在 .bib 中标记 `do_not_cite`）；文末增加 `## References` 段落，可由 `render_markdown_references.py` 生成。
+   - **LaTeX（可选）**：正文为 `{topic}_review.tex`；引用使用 `\cite{key}`。
 
    **内容分离约束（防止 AI 流程泄露）**：
-   - **综述正文** `{topic}_review.tex` 必须**仅聚焦领域知识**，禁止出现任何"AI工作流程"描述
+   - **综述正文**必须**仅聚焦领域知识**，禁止出现任何"AI工作流程"描述
    - **禁止在正文出现的内容**：
      * ❌ "本综述基于 X 条初检文献、去重后 Y 条、最终保留 Z 篇"
      * ❌ "方法学上，本综述按照'检索→去重→评分→选文→写作'的管线执行"
@@ -115,7 +121,7 @@ metadata:
      * ❌ 单次引用 >4 个 key（<5% 情况，仅限综述性陈述）
    - **验证要求**：写作完成后运行 `scripts/validate_citation_distribution.py --verbose`，如单篇引用 <65% 必须修正
    - 详见 `skill-references/expert-review-writing.md` 的"引用分布约束"章节
-8) **有机扩写 + 校验与导出**：若 `validate_counts.py` 判定字数不足，则仅在最短/缺证据的子主题段内按配额进行"增量扩写"（保持原主张与引用不变，只补证据/局限/衔接），补后再跑校验；`validate_review_tex.py` 对章节/引用大小写不敏感且提供可解释提示；如有 `word_budget_final.csv` 可选跑 `validate_word_budget.py`；通过后 `compile_latex_with_bibtex.py` 自动回退/同步模板与 `.bst` 后生成 PDF，`convert_latex_to_word.py` 生成 Word。
+8) **有机扩写 + 校验与导出**：若 `validate_counts.py`（支持 `--md` / `--tex`）判定字数不足，则仅在最短/缺证据的子主题段内按配额进行"增量扩写"（保持原主张与引用不变，只补证据/局限/衔接），补后再跑校验；Markdown 路径使用 `validate_review_markdown.py`，LaTeX 路径使用 `validate_review_tex.py`；如有 `word_budget_final.csv` 可选跑 `validate_word_budget.py`；导出阶段仅当 `export_formats` 包含 `pdf` 时调用 `compile_latex_with_bibtex.py`，包含 `word` 时调用 `convert_latex_to_word.py`；markdown 为直接交付，无需外部工具。
 9) **多语言翻译与编译（可选）**：如果用户指定了目标语言（如"日语综述"、"德语综述"）：
    - 使用 `multi_language.py` 处理全流程（语言检测、翻译、编译）
    - **AI 翻译**：翻译正文内容，保留所有 `\cite{key}` 引用和 LaTeX 结构
@@ -126,16 +132,25 @@ metadata:
    - **支持语言**：en（英语）、zh（中文）、ja（日语）、de（德语）、fr（法语）、es（西班牙语）
    - **详见**：`skill-references/multilingual-guide.md`
 
-## 输出（保持 6 件套）
+## 输出（配置驱动）
+
+默认产物（`output.primary_format: markdown`，`output.export_formats: [markdown]`）：
+
 | 类型 | 文件 | 说明 |
 |---|---|---|
 | 工作条件 | `{主题}_工作条件.md` | 记录输入、检索/日志、评分与选文依据、写作结构、校验结果 |
-| 正文 LaTeX | `{主题}_review.tex` | 摘要/引言/子主题段落/讨论/展望/结论，`\cite{key}` |
+| 正文 Markdown | `{主题}_review.md` | 摘要/引言/子主题段落/讨论/展望/结论，Harvard DOI 引用 |
 | 参考文献 | `{主题}_参考文献.bib` | 选中文献 BibTeX |
-| 字数预算 CSV | `word_budget_run{1,2,3}.csv` / `word_budget_final.csv` / `non_cited_budget.csv` | 综/述字数预算（70% 引用段 + 30% 无引用段，空 ID 行表示无引用大纲） |
+| 字数预算 CSV | `word_budget_run{1,2,3}.csv` / `word_budget_final.csv` / `non_cited_budget.csv` | 综/述字数预算 |
 | 验证报告 | `{主题}_验证报告.md` | 字数/引用/章节/引用一致性验证结果汇总 |
-| PDF | `{主题}_review.pdf` | 由 LaTeX 渲染 |
-| Word | `{主题}_review.docx` | 由 LaTeX + BibTeX 导出 |
+
+可选产物（需在 `output.export_formats` 中添加 `pdf` / `word`，并安装对应工具）：
+
+| 类型 | 文件 | 依赖 |
+|---|---|---|
+| 正文 LaTeX | `{主题}_review.tex` | 需要 `primary_format: latex` 或手动提供 |
+| PDF | `{主题}_review.pdf` | 需要 xelatex + bibtex |
+| Word | `{主题}_review.docx` | 需要 pandoc |
 
 ## 校验硬门槛（仅保留必要项）
 - 正文字数：档位默认范围见 `config.yaml.validation.words.{min,max}`（可命令行覆盖）

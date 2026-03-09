@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+### Changed（Markdown-First 与可选 TeX/Pandoc 依赖改造 - 2026-03-09）
+
+- **config.yaml**: 新增 `output.primary_format`（默认 `markdown`）、`output.export_formats`（默认 `[markdown]`）、`output.review_markdown` 模板
+- **pipeline_runner.py**: 阶段 5/6/7 改为配置驱动：
+  - 阶段 5：根据 `primary_format` 注册 `review_markdown` 或 `review_tex`
+  - 阶段 6：按格式路由到 `validate_review_markdown.py` 或 `validate_review_tex.py`
+  - 阶段 7：仅当 `export_formats` 包含 `pdf`/`word` 时才调用对应工具，缺失工具时明确报错
+- **validate_counts.py**: 新增 `--md` 选项，支持 Markdown 正文词数和 DOI 引用统计
+- **validate_subtopic_count.py**: 新增 `--md` 选项，支持 Markdown 标题解析
+- **generate_validation_report.py**: 输出措辞从 "LaTeX review validation" 泛化为格式无关
+- **organize_run_dir.py / validate_workdir_cleanliness.py**: `*_review.md` 作为合法根目录交付物
+- **reconcile_state_from_outputs.py**: 识别 `*_review.md` 并记录 `review_markdown` 到 pipeline_state
+
+### Added（Markdown-First - 2026-03-09）
+
+- **scripts/validate_review_markdown.py**: Markdown 综述校验器（必需章节 + DOI 引用 + Harvard referencing）
+- **scripts/render_markdown_references.py**: 生成 Harvard 引用映射 JSON 和 `## References` 段落
+- **tests/unit/test_validate_review_markdown.py**: Markdown 校验器单元测试
+- **tests/unit/test_render_markdown_references.py**: 引用渲染脚本单元测试
+- **tests/unit/test_validate_counts_markdown.py**: validate_counts Markdown 支持测试
+- **tests/unit/test_validate_subtopic_markdown.py**: validate_subtopic_count Markdown 支持测试
+
 ### Added（最小离线测试骨架 - 2026-03-09）
 
 - 新增正式测试目录：`tests/unit`、`tests/cli`、`tests/integration`、`tests/fixtures`
