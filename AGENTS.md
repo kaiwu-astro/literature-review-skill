@@ -37,6 +37,13 @@
 - [examples/](/Users/wukai/source_codes/literature-review-skill/examples)：真实输出示例
 - [latex-template/](/Users/wukai/source_codes/literature-review-skill/latex-template)：LaTeX 模板与 `.bst`
 
+## 依赖判断
+
+- 修改文档或脚本前，应以 `SKILL.md`、`config.yaml` 与实际脚本行为为准判断依赖，不要只凭 README 或历史描述做推断。
+- 当前用户侧**必须依赖**应按统一口径理解为：Python 依赖（先执行 `pip install -r requirements.txt`）、TeX 工具链（`xelatex`、`bibtex`）与 Pandoc。
+- `ADS_API_TOKEN` 是高价值建议项，尤其适合天文/天体物理主题，但不是硬依赖；缺失时检索会降级到其他 provider，而不是直接阻断主流程。
+- 若改动新增了依赖或改变了依赖层级，必须同步更新 `README.md`、`SKILL.md` 与 `CHANGELOG.md`，避免文档口径分裂。
+
 ## 工作方式
 
 ### 1. 先读配置和现有流程，再改代码

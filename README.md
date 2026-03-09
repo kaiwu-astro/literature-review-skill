@@ -4,9 +4,26 @@
 
 > 天文/天体物理推荐检索源：**NASA ADS + arXiv (astro-ph)**，并可与 OpenAlex/Crossref 联用。
 
-## 快速开始
+## 运行依赖
 
-(可选：在终端中设置环境变量 `ADS_API_TOKEN=your_nasa_ads_api_token` ，来启用ADS检索，否则会使用OpenAlex)
+### 必须依赖
+
+- **Python 3.9+**：建议先确认 Python 版本，再在仓库根目录执行 `pip install -r requirements.txt`。
+- **Python 包依赖**：当前 `requirements.txt` 中的 `pyyaml`、`requests` 是主流程直接依赖，其余包也建议按仓库当前依赖文件统一安装，避免手动逐个判断。
+- **TeX 工具链**：导出 PDF 依赖 `xelatex` 与 `bibtex`。`scripts/compile_latex_with_bibtex.py` 会将二者作为必需工具检查。
+- **Pandoc**：导出 Word 依赖 `pandoc`。`scripts/convert_latex_to_word.py` 会将其作为必需工具检查。
+- **完整导出要求**：本项目默认交付物同时包含 PDF 和 Word，因此未安装 TeX 工具链或 Pandoc 时，主流水线无法完整完成 `7_export` 阶段。
+
+### 强烈建议
+
+- **`ADS_API_TOKEN`**：这不是硬依赖，但对天文/天体物理主题是高价值建议项。配置后可启用 NASA ADS 检索；未配置时，系统会自动降级到 OpenAlex / Semantic Scholar / Crossref 等来源继续执行，而不是直接失败。
+
+### 可选增强
+
+- **MCP 搜索能力**：属于宿主环境可选增强，可提升部分检索/联网能力，但不是运行本仓库的必装项。
+- **成本追踪相关联网能力**：仅在使用成本追踪、价格抓取等可选功能时有帮助，不属于主流水线的必须依赖。
+
+## 快速开始
 
 ### 最小可用
 ```
