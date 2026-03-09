@@ -296,6 +296,14 @@ layout:
   # 注意：状态保存在 {hidden_dir}/pipeline_state.json，不再使用单独的 checkpoints/ 目录
 
 output:
+  # 主正文格式：markdown（默认）或 latex
+  primary_format: "markdown"
+  # 导出目标列表：仅列出的格式会在阶段 7 生成；markdown 为直接交付，无需外部工具
+  # 可选值：markdown, pdf, word
+  export_formats:
+    - "markdown"
+  # Markdown 正文模板
+  review_markdown: "{topic}_review.md"
   working_conditions: "{topic}_工作条件.md"
   review_tex: "{topic}_review.tex"
   references_bib: "{topic}_参考文献.bib"

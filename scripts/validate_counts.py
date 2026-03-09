@@ -25,6 +25,42 @@ def load_config(config_path: Path) -> dict:
         return yaml.safe_load(f) or {}
 
 
+def extract_body_markdown(md: str) -> Tuple[str, list[str]]:
+    """从 Markdown 提取正文纯文本（去标题标记、链接语法、References 段落等）。"""
+    debug_notes: list[str] = []
+    # 去 ## References 及之后
+    ref_pat = re.compile(r"^##\s+References\b", re.IGNORECASE | re.MULTILINE)
+    m = ref_pat.search(md)
+    if m:
+        md = md[:m.start()]
+        debug_notes.append("removed ## References section")
+    # 去 Markdown 链接，保留显示文本
+    md = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", md)
+    # 去标题标记
+    md = re.sub(r"^#{1,6}\s+", "", md, flags=re.MULTILINE)
+    # 去加粗/斜体
+    md = re.sub(r"\*{1,3}([^*]+)\*{1,3}", r"\1", md)
+    # 去行内代码
+    md = re.sub(r"`[^`]+`", " ", md)
+    # 去 HTML 标签
+    md = re.sub(r"<[^>]+>", " ", md)
+    # 合并空白
+    md = re.sub(r"\s+", " ", md)
+    return md.strip(), debug_notes
+
+
+def extract_doi_citations_markdown(md: str) -> set[str]:
+    """提取 Markdown 正文中的唯一 DOI 引用（用于计数）。"""
+    # 去 ## References 段落
+    ref_pat = re.compile(r"^##\s+References\b", re.IGNORECASE | re.MULTILINE)
+    m = ref_pat.search(md)
+    body = md[:m.start()] if m else md
+    dois: set[str] = set()
+    for match in re.finditer(r"\[[^\]]+\]\((https?://doi\.org/[^\s)]+)\)", body):
+        dois.add(match.group(1).strip().rstrip("/").lower())
+    return dois
+
+
 def extract_body(tex: str) -> Tuple[str, list[str]]:
     """裁剪到 \\begin{document} 之后，并去掉常见非正文环境。"""
     debug_notes: list[str] = []
@@ -113,8 +149,10 @@ def load_thresholds(config: dict, review_level: str, override_words: Optional[in
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate review.tex word/citation counts")
-    parser.add_argument("--tex", required=True, type=Path, help="Path to {topic}_review.tex")
+    parser = argparse.ArgumentParser(description="Validate review word/citation counts (supports .tex and .md)")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--tex", type=Path, help="Path to {topic}_review.tex")
+    group.add_argument("--md", type=Path, help="Path to {topic}_review.md (Markdown)")
     parser.add_argument("--config", type=Path, default=Path(__file__).parent.parent / "config.yaml", help="Path to config.yaml")
     parser.add_argument("--review-level", choices=["premium", "standard", "basic"], help="Override review level (default: config.review_levels.default)")
     parser.add_argument("--min-words", type=int, help="Override minimum body words")
@@ -127,11 +165,15 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    tex_path = args.tex.resolve()
+
+    # 确定输入格式
+    is_markdown = args.md is not None
+    input_path = (args.md if is_markdown else args.tex).resolve()
     config_path = args.config.resolve()
 
-    if not tex_path.exists():
-        print(f"✗ tex 不存在: {tex_path}", file=sys.stderr)
+    if not input_path.exists():
+        label = "md" if is_markdown else "tex"
+        print(f"✗ {label} 不存在: {input_path}", file=sys.stderr)
         return 2
 
     try:
@@ -148,15 +190,24 @@ def main() -> int:
     max_words = args.max_words if args.max_words is not None else max_words_default
     max_cites = args.max_cites if args.max_cites is not None else max_cites_default
 
+    raw_text = input_path.read_text(encoding="utf-8", errors="replace")
+
     try:
-        tex_raw = tex_path.read_text(encoding="utf-8", errors="replace")
-        body_text, debug_notes = extract_body(tex_raw)
+        if is_markdown:
+            body_text, debug_notes = extract_body_markdown(raw_text)
+        else:
+            body_text, debug_notes = extract_body(raw_text)
     except Exception as exc:  # noqa: BLE001
-        print(f"✗ 读取/解析 tex 失败: {exc}", file=sys.stderr)
+        label = "md" if is_markdown else "tex"
+        print(f"✗ 读取/解析 {label} 失败: {exc}", file=sys.stderr)
         return 2
 
     words_total, words_cn, words_en, words_digits = count_words(body_text)
-    cite_keys = extract_cite_keys(tex_raw)
+
+    if is_markdown:
+        cite_keys = extract_doi_citations_markdown(raw_text)
+    else:
+        cite_keys = extract_cite_keys(raw_text)
 
     passed = True
     if min_words and words_total < min_words:
@@ -169,7 +220,8 @@ def main() -> int:
         passed = False
 
     result = {
-        "file": str(tex_path),
+        "file": str(input_path),
+        "format": "markdown" if is_markdown else "latex",
         "review_level": review_level,
         "words_total": words_total,
         "words_chinese": words_cn,

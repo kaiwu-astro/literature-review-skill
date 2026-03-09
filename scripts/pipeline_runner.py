@@ -5,7 +5,8 @@ pipeline_runner.py - 相关性驱动的系统综述 Pipeline Runner
 阶段：
   0_setup  →  1_search  →  2_dedupe  →  3_score  →  4_select  →  5_write  →  6_validate  →  7_export
 
-目标：保持输出形态不变（LaTeX + BibTeX → PDF/Word），去除质量/证据硬阈值，只保留字数/参考数与章节/引用一致性检查。
+默认主正文格式：Markdown（由 config.yaml output.primary_format 驱动）。
+导出目标由 output.export_formats 决定：markdown 直接交付，pdf/word 需要外部工具。
 """
 
 from __future__ import annotations
@@ -100,7 +101,7 @@ class PipelineRunner:
         "4.5_word_budget": "生成综/述字数预算",
         "5_write": "写作准备（工作条件与正文骨架）",
         "6_validate": "校验（字数/引用/章节/引用一致性）",
-        "7_export": "导出 PDF/Word",
+        "7_export": "导出（按 export_formats 配置）",
     }
 
     def __init__(
@@ -184,6 +185,16 @@ class PipelineRunner:
 
         output_cfg = self.config.get("output", {}) if isinstance(self.config, dict) else {}
         self.output_templates = output_cfg
+        self.primary_format = str(output_cfg.get("primary_format", "markdown")).strip().lower()
+        export_raw = output_cfg.get("export_formats", None)
+        if isinstance(export_raw, list):
+            self.export_formats = [str(f).strip().lower() for f in export_raw]
+        else:
+            # 兼容旧配置：无 export_formats 时，根据 primary_format 推断
+            if self.primary_format == "latex":
+                self.export_formats = ["pdf", "word"]
+            else:
+                self.export_formats = ["markdown"]
 
         self.state = PipelineState(
             topic=self.topic,
@@ -258,10 +269,16 @@ class PipelineRunner:
     def _write_working_conditions_skeleton(self, path: Path) -> None:
         if path.exists():
             return
+        if self.primary_format == "markdown":
+            review_file_hint = "{主题}_review.md"
+        else:
+            review_file_hint = "{主题}_review.tex"
         sections = [
             "# 工作条件",
             f"- 主题: {self.topic}",
             f"- 档位: {self.review_level}",
+            f"- 正文格式: {self.primary_format}",
+            f"- 导出目标: {', '.join(self.export_formats)}",
             f"- 目标字数: {self.target_words['min']}–{self.target_words['max']}（可覆盖）",
             f"- 目标参考文献: {self.target_refs['min']}–{self.target_refs['max']}（可覆盖）",
             f"- 最高原则: 不可偷懒/短视，需说明不确定性处理。",
@@ -269,7 +286,7 @@ class PipelineRunner:
             "## ⚠️ 内容分离原则（防止 AI 流程泄露）",
             "",
             "**重要**：本文件用于记录 AI 工作流程和方法学信息。",
-            "综述正文（{主题}_review.tex）必须完全聚焦领域知识，不应出现任何以下内容：",
+            f"综述正文（{review_file_hint}）必须完全聚焦领域知识，不应出现任何以下内容：",
             "- ❌ '本综述基于 X 条初检文献、去重后 Y 条、最终保留 Z 篇'",
             "- ❌ '方法学上，本综述按照检索→去重→评分→选文→写作的管线执行'",
             "- ❌ 任何提及'检索'、'去重'、'相关性评分'、'选文'、'字数预算'等元操作的描述",
@@ -550,11 +567,19 @@ class PipelineRunner:
     def run_stage_5_write(self) -> bool:
         print("\n[阶段5] 写作准备")
         wc = self._output_path("working_conditions")
-        review_tex = self._output_path("review_tex")
         references_bib = Path(self.state.output_files.get("references_bib", self._output_path("references_bib")))
         self.state.output_files["working_conditions"] = str(wc)
-        self.state.output_files["review_tex"] = str(review_tex)
         self._write_working_conditions_skeleton(wc)
+
+        # 根据 primary_format 决定正文文件
+        if self.primary_format == "markdown":
+            review_primary = self._output_path("review_markdown")
+            self.state.output_files["review_markdown"] = str(review_primary)
+            fmt_label = "Markdown"
+        else:
+            review_primary = self._output_path("review_tex")
+            self.state.output_files["review_tex"] = str(review_primary)
+            fmt_label = "LaTeX"
 
         # 记录字数预算
         if "word_budget_final" in self.state.output_files:
@@ -636,29 +661,37 @@ class PipelineRunner:
             )
             self.state.output_files["data_extraction_table"] = str(self.data_extraction_table)
 
-        print("\n  请生成以下文件后继续：")
+        print(f"\n  正文格式: {fmt_label}")
+        print(f"  请生成以下文件后继续：")
         print(f"    - {wc.name}（工作条件，包括评分/选文理由）")
-        print(f"    - {review_tex.name}（综述正文 LaTeX，章节：摘要/引言/子主题/讨论/展望/结论）")
+        print(f"    - {review_primary.name}（综述正文 {fmt_label}，章节：摘要/引言/子主题/讨论/展望/结论）")
         print(f"    - {references_bib.name}（已由上一阶段生成）")
         print("\n  ⚠️ 子主题数量约束：除摘要/引言/讨论/展望/结论外，应有 3-7 个子主题 section")
         print("     如超过 7 个，请合并相似主题（如 CNN/Transformer → '深度学习模型架构'）")
 
-        if review_tex.exists() and references_bib.exists() and wc.exists():
+        if review_primary.exists() and references_bib.exists() and wc.exists():
             self.state.completed_stages.append("5_write")
             self.save_state()
             return True
 
-        print("  ✗ 尚未找到 review.tex 或 工作条件文件，请补全后重跑 --resume-from 5")
+        print(f"  ✗ 尚未找到 {review_primary.name} 或工作条件文件，请补全后重跑 --resume-from 5")
         self.save_state()
         return False
 
     def run_stage_6_validate(self) -> bool:
         print("\n[阶段6] 校验")
         wc = Path(self.state.output_files.get("working_conditions", ""))
-        review_tex = Path(self.state.output_files.get("review_tex", ""))
         references_bib = Path(self.state.output_files.get("references_bib", ""))
-        if not wc.exists() or not review_tex.exists() or not references_bib.exists():
-            print("  ✗ 缺少工作条件/tex/bib")
+
+        # 根据格式确定正文路径
+        if self.primary_format == "markdown":
+            review_primary = Path(self.state.output_files.get("review_markdown", ""))
+        else:
+            review_primary = Path(self.state.output_files.get("review_tex", ""))
+
+        if not wc.exists() or not review_primary.exists() or not references_bib.exists():
+            label = "md" if self.primary_format == "markdown" else "tex"
+            print(f"  ✗ 缺少工作条件/{label}/bib")
             return False
 
         # 可选：校验字数预算
@@ -680,50 +713,93 @@ class PipelineRunner:
             except Exception:
                 pass
 
-        # 捕获验证脚本输出用于生成报告
-        counts_ok, counts_output = self._run_script_capture_output(
-            "validate_counts.py",
-            [
-                "--tex",
-                str(review_tex),
-                "--min-words",
-                str(self.validation_words["min"]),
-                "--max-words",
-                str(self.validation_words["max"]),
-                "--min-cites",
-                str(self.validation_refs["min"]),
-                "--max-cites",
-                str(self.validation_refs["max"]),
-            ],
-        )
+        # 捕获验证脚本输出用于生成报告（按格式分发校验器）
+        if self.primary_format == "markdown":
+            counts_ok, counts_output = self._run_script_capture_output(
+                "validate_counts.py",
+                [
+                    "--md",
+                    str(review_primary),
+                    "--min-words",
+                    str(self.validation_words["min"]),
+                    "--max-words",
+                    str(self.validation_words["max"]),
+                    "--min-cites",
+                    str(self.validation_refs["min"]),
+                    "--max-cites",
+                    str(self.validation_refs["max"]),
+                ],
+            )
 
-        tex_ok, tex_output = self._run_script_capture_output(
-            "validate_review_tex.py",
-            [
-                "--tex",
-                str(review_tex),
-                "--bib",
-                str(references_bib),
-                "--min-refs",
-                str(self.validation_refs["min"]),
-                "--max-refs",
-                str(self.validation_refs["max"]),
-            ],
-        )
+            tex_ok, tex_output = self._run_script_capture_output(
+                "validate_review_markdown.py",
+                [
+                    "--md",
+                    str(review_primary),
+                    "--bib",
+                    str(references_bib),
+                    "--min-refs",
+                    str(self.validation_refs["min"]),
+                    "--max-refs",
+                    str(self.validation_refs["max"]),
+                ],
+            )
 
-        # 子主题数量验证
-        subtopic_ok, subtopic_output = self._run_script_capture_output(
-            "validate_subtopic_count.py",
-            [
-                "--tex",
-                str(review_tex),
-                "--min-subtopics",
-                "3",
-                "--max-subtopics",
-                "7",
-            ],
-        )
-        print(subtopic_output)  # 显示验证结果
+            subtopic_ok, subtopic_output = self._run_script_capture_output(
+                "validate_subtopic_count.py",
+                [
+                    "--md",
+                    str(review_primary),
+                    "--min-subtopics",
+                    "3",
+                    "--max-subtopics",
+                    "7",
+                ],
+            )
+        else:
+            counts_ok, counts_output = self._run_script_capture_output(
+                "validate_counts.py",
+                [
+                    "--tex",
+                    str(review_primary),
+                    "--min-words",
+                    str(self.validation_words["min"]),
+                    "--max-words",
+                    str(self.validation_words["max"]),
+                    "--min-cites",
+                    str(self.validation_refs["min"]),
+                    "--max-cites",
+                    str(self.validation_refs["max"]),
+                ],
+            )
+
+            tex_ok, tex_output = self._run_script_capture_output(
+                "validate_review_tex.py",
+                [
+                    "--tex",
+                    str(review_primary),
+                    "--bib",
+                    str(references_bib),
+                    "--min-refs",
+                    str(self.validation_refs["min"]),
+                    "--max-refs",
+                    str(self.validation_refs["max"]),
+                ],
+            )
+
+            subtopic_ok, subtopic_output = self._run_script_capture_output(
+                "validate_subtopic_count.py",
+                [
+                    "--tex",
+                    str(review_primary),
+                    "--min-subtopics",
+                    "3",
+                    "--max-subtopics",
+                    "7",
+                ],
+            )
+
+        print(subtopic_output)
         if not subtopic_ok:
             print("  ⚠️ 子主题数量超出范围，建议合并相似主题", file=sys.stderr)
 
@@ -731,7 +807,6 @@ class PipelineRunner:
         validation_report_path = self._output_path("validation_report")
         counts_json_path: Optional[Path] = None
         try:
-            # 将 validate_counts 的输出保存到 work_dir 内（避免 /tmp 导致的跨 run 污染与隔离冲突）
             counts_json_path = self.artifacts_dir / f"validate_counts_{self.file_stem}.json"
             counts_json_path.write_text(counts_output, encoding="utf-8")
 
@@ -748,7 +823,6 @@ class PipelineRunner:
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             ]
 
-            # 选文后摘要补齐属于默认关键质量门槛之一：在报告中显式给出摘要覆盖率，避免“无感引用缺摘要文献”
             selected_jsonl = str(self.state.input_files.get("selected_papers", "") or "").strip()
             if selected_jsonl:
                 search_cfg = self.config.get("search", {}) if isinstance(self.config, dict) else {}
@@ -762,14 +836,12 @@ class PipelineRunner:
 
             self._run_script("generate_validation_report.py", report_args)
 
-            # 记录报告路径到 output_files
             self.state.output_files["validation_report"] = str(validation_report_path)
             print(f"  ✓ 验证报告: {validation_report_path}")
 
         except Exception as e:
             print(f"  ⚠️ 生成验证报告失败: {e}", file=sys.stderr)
         finally:
-            # counts_json_path 保留在 artifacts_dir 便于复盘与追溯
             pass
 
         if counts_ok and tex_ok:
@@ -781,36 +853,69 @@ class PipelineRunner:
         return False
 
     def run_stage_7_export(self) -> bool:
-        print("\n[阶段7] 导出 PDF/Word")
-        review_tex = Path(self.state.output_files.get("review_tex", ""))
+        print("\n[阶段7] 导出（按 export_formats 配置）")
         references_bib = Path(self.state.output_files.get("references_bib", ""))
-        if not review_tex.exists() or not references_bib.exists():
-            print("  ✗ 缺少 review.tex 或参考文献 bib")
-            return False
 
-        pdf_out = self._output_path("review_pdf")
-        word_out = self._output_path("review_word")
-        latex_cfg = self.config.get("latex", {}) if isinstance(self.config, dict) else {}
-        template_override = latex_cfg.get("template_path_override") or latex_cfg.get("template_path")
-        if template_override:
-            print(f"  使用模板: {template_override}")
-        print(f"  tex: {review_tex}")
-        print(f"  bib: {references_bib}")
-        print(f"  pdf 输出: {pdf_out}")
-        print(f"  word 输出: {word_out}")
+        # Markdown 视为直接交付
+        if "markdown" in self.export_formats:
+            review_md = self.state.output_files.get("review_markdown", "")
+            if review_md and Path(review_md).exists():
+                print(f"  ✓ Markdown 正文直接交付: {review_md}")
+            elif self.primary_format == "markdown":
+                # 检查是否有 review_markdown 路径
+                review_md_path = self._output_path("review_markdown")
+                if review_md_path.exists():
+                    self.state.output_files["review_markdown"] = str(review_md_path)
+                    print(f"  ✓ Markdown 正文直接交付: {review_md_path}")
 
-        pdf_ok = self._run_script("compile_latex_with_bibtex.py", [str(review_tex), str(pdf_out)])
-        word_ok = self._run_script("convert_latex_to_word.py", [str(review_tex), str(references_bib), str(word_out)])
+        # PDF 导出（仅当 export_formats 包含 pdf）
+        pdf_ok = True
+        if "pdf" in self.export_formats:
+            review_tex = Path(self.state.output_files.get("review_tex", ""))
+            if not review_tex.exists():
+                review_tex = self._output_path("review_tex")
+            if not review_tex.exists() or not references_bib.exists():
+                print("  ✗ 导出 PDF 需要 review.tex 和参考文献 bib，但文件缺失", file=sys.stderr)
+                print("  ℹ️ 提示：PDF 导出需要 LaTeX 正文或从 Markdown 转换（当前未实现自动转换）", file=sys.stderr)
+                pdf_ok = False
+            else:
+                pdf_out = self._output_path("review_pdf")
+                import shutil
+                if not shutil.which("xelatex") or not shutil.which("bibtex"):
+                    print("  ✗ 导出 PDF 需要 xelatex 和 bibtex，但未找到。请安装 TeX Live 工具链。", file=sys.stderr)
+                    pdf_ok = False
+                else:
+                    pdf_ok = self._run_script("compile_latex_with_bibtex.py", [str(review_tex), str(pdf_out)])
+                    if pdf_ok and pdf_out.exists():
+                        self.state.output_files["review_pdf"] = str(pdf_out)
 
-        if pdf_ok and word_ok and pdf_out.exists() and word_out.exists():
-            self.state.output_files["review_pdf"] = str(pdf_out)
-            self.state.output_files["review_word"] = str(word_out)
+        # Word 导出（仅当 export_formats 包含 word）
+        word_ok = True
+        if "word" in self.export_formats:
+            review_tex = Path(self.state.output_files.get("review_tex", ""))
+            if not review_tex.exists():
+                review_tex = self._output_path("review_tex")
+            if not review_tex.exists() or not references_bib.exists():
+                print("  ✗ 导出 Word 需要 review.tex 和参考文献 bib，但文件缺失", file=sys.stderr)
+                word_ok = False
+            else:
+                word_out = self._output_path("review_word")
+                import shutil
+                if not shutil.which("pandoc"):
+                    print("  ✗ 导出 Word 需要 pandoc，但未找到。请安装 Pandoc。", file=sys.stderr)
+                    word_ok = False
+                else:
+                    word_ok = self._run_script("convert_latex_to_word.py", [str(review_tex), str(references_bib), str(word_out)])
+                    if word_ok and word_out.exists():
+                        self.state.output_files["review_word"] = str(word_out)
+
+        if pdf_ok and word_ok:
             self.state.completed_stages.append("7_export")
             self.save_state()
             print("  ✓ 导出完成")
             return True
 
-        print("  ✗ 导出失败")
+        print("  ✗ 导出失败（部分格式未完成）")
         return False
 
     # ---------------- orchestrator ---------------- #

@@ -94,6 +94,7 @@ def _detect(work_dir: Path) -> Tuple[Dict[str, str], Dict[str, str], List[str]]:
 
     # final-ish outputs in work_dir
     wc = _find_one(work_dir, "*_工作条件.md")
+    review_md = _find_one(work_dir, "*_review.md")
     tex = _find_one(work_dir, "*_review.tex")
     bib = _find_one(work_dir, "*_参考文献.bib")
     pdf = _find_one(work_dir, "*_review.pdf")
@@ -103,6 +104,9 @@ def _detect(work_dir: Path) -> Tuple[Dict[str, str], Dict[str, str], List[str]]:
     if wc:
         output_files["working_conditions"] = str(wc)
         completed.append("0_setup")
+    if review_md:
+        output_files["review_markdown"] = str(review_md)
+        completed.append("5_write")
     if tex:
         output_files["review_tex"] = str(tex)
         completed.append("5_write")
@@ -118,6 +122,9 @@ def _detect(work_dir: Path) -> Tuple[Dict[str, str], Dict[str, str], List[str]]:
         completed.append("6_validate")
 
     if pdf and docx:
+        completed.append("7_export")
+    elif review_md:
+        # Markdown-first: 正文即交付，视为导出完成
         completed.append("7_export")
 
     # artifacts

@@ -35,23 +35,27 @@ def load_json_result(path: Path) -> Dict[str, Any]:
 
 
 def parse_review_tex_result(output: str) -> Dict[str, Any]:
-    """解析 validate_review_tex.py 的输出"""
+    """解析 validate_review_tex.py 或 validate_review_markdown.py 的输出"""
     result = {
         "passed": "✓" in output or "passed" in output.lower(),
         "cites": 0,
         "bib_keys": 0,
         "sections": None,
     }
-    # 提取 cites= 和 bib_keys= 的数值
     import re
     import json
 
+    # LaTeX 格式: cites=N, bib_keys=N
     cites_match = re.search(r"cites=(\d+)", output)
     bib_match = re.search(r"bib_keys=(\d+)", output)
+    # Markdown 格式: dois=N
+    dois_match = re.search(r"dois=(\d+)", output)
     if cites_match:
         result["cites"] = int(cites_match.group(1))
     if bib_match:
         result["bib_keys"] = int(bib_match.group(1))
+    if dois_match:
+        result["cites"] = int(dois_match.group(1))
 
     # 提取 SECTIONS: 后的 JSON 数据
     sections_match = re.search(r"SECTIONS:(\{.*?\})$", output, re.MULTILINE | re.DOTALL)
@@ -307,7 +311,7 @@ def generate_markdown_report(
 
     if overall_passed:
         lines.extend([
-            "✅ **所有验证项通过**，系统综述已满足质量标准，可以继续导出 PDF/Word。",
+            "✅ **所有验证项通过**，系统综述已满足质量标准，可以继续导出。",
             "",
         ])
     else:
