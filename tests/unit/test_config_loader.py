@@ -8,6 +8,10 @@ import config_loader
 
 
 def test_load_config_uses_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SLR_API_TIMEOUT", raising=False)
+    monkeypatch.delenv("SLR_RATE_LIMIT", raising=False)
+    monkeypatch.delenv("ADS_API_TOKEN", raising=False)
+
     cfg = tmp_path / "config.yaml"
     cfg.write_text("api:\n  semantic_scholar:\n    timeout: 10\n", encoding="utf-8")
     monkeypatch.setattr(config_loader, "_CONFIG_PATH", cfg)
@@ -22,6 +26,10 @@ def test_load_config_uses_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
 
 
 def test_load_config_force_reload(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SLR_API_TIMEOUT", raising=False)
+    monkeypatch.delenv("SLR_RATE_LIMIT", raising=False)
+    monkeypatch.delenv("ADS_API_TOKEN", raising=False)
+
     cfg = tmp_path / "config.yaml"
     cfg.write_text("api:\n  semantic_scholar:\n    timeout: 10\n", encoding="utf-8")
     monkeypatch.setattr(config_loader, "_CONFIG_PATH", cfg)
