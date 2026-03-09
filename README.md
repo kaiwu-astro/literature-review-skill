@@ -6,6 +6,7 @@
 
 ## 快速开始
 
+(可选：在终端中设置环境变量 `ADS_API_TOKEN=your_nasa_ads_api_token` ，来启用ADS检索)
 ```
 请用 systematic-literature-review 这个skill写一篇"xxx主题"的Premium级综述。 参考文献以近2023-2025年为主，更早之前的文献，如果特别相关、特别重要的，也可以纳入。要有一个小节，专门讨论出未来3年较有前景的研究方向。工作目录名为 XXX-01。
 ```
