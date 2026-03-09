@@ -188,7 +188,8 @@ def check_required_sections(md: str) -> Tuple[List[str], Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 _HARVARD_PATTERN = re.compile(
-    r"^([A-Z\u4e00-\u9fff][\w\s&.'-]*?)\s*\((\d{4}|n\.d\.)\)$"
+    r"^(\S[\w\s&.'-]*?)\s*\((\d{4}|n\.d\.)\)$",
+    re.UNICODE,
 )
 
 

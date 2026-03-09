@@ -57,6 +57,12 @@ def test_format_authors_harvard_string():
     assert "et al." in result
 
 
+def test_format_authors_harvard_string_single_with_comma():
+    # "Last, First" pattern should be treated as a single author
+    result = rmr._format_authors_harvard("Smith, John")
+    assert result == "Smith"
+
+
 # ---------------------------------------------------------------------------
 # _format_year
 # ---------------------------------------------------------------------------

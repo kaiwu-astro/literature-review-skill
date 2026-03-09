@@ -15,6 +15,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, asdict, field
@@ -880,7 +881,6 @@ class PipelineRunner:
                 pdf_ok = False
             else:
                 pdf_out = self._output_path("review_pdf")
-                import shutil
                 if not shutil.which("xelatex") or not shutil.which("bibtex"):
                     print("  ✗ 导出 PDF 需要 xelatex 和 bibtex，但未找到。请安装 TeX Live 工具链。", file=sys.stderr)
                     pdf_ok = False
@@ -900,7 +900,6 @@ class PipelineRunner:
                 word_ok = False
             else:
                 word_out = self._output_path("review_word")
-                import shutil
                 if not shutil.which("pandoc"):
                     print("  ✗ 导出 Word 需要 pandoc，但未找到。请安装 Pandoc。", file=sys.stderr)
                     word_ok = False

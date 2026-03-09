@@ -43,8 +43,14 @@ def _format_authors_harvard(authors: Any) -> str:
     if not authors:
         return "Unknown"
     if isinstance(authors, str):
-        # 尝试按分号或逗号分隔
-        parts = [a.strip() for a in re.split(r"[;,]\s*(?:and\s+)?", authors) if a.strip()]
+        # 优先按分号分隔，其次按 " and " 分隔
+        if ";" in authors:
+            parts = [a.strip() for a in authors.split(";") if a.strip()]
+        elif " and " in authors.lower():
+            parts = [a.strip() for a in re.split(r"\s+and\s+", authors, flags=re.IGNORECASE) if a.strip()]
+        else:
+            # 单个作者名（可能含逗号如 "Last, First"）
+            parts = [authors.strip()]
         if not parts:
             return authors.strip() or "Unknown"
         authors = parts
