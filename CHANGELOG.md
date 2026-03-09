@@ -5,6 +5,15 @@ All notable changes to the systematic-literature-review skill will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+### Added（最小离线测试骨架 - 2026-03-09）
+
+- 新增正式测试目录：`tests/unit`、`tests/cli`、`tests/integration`、`tests/fixtures`
+- 为 `validate_counts.py`、`select_references.py`、`plan_word_budget.py`、`config_loader.py` 增加高价值单元测试
+- 新增 CLI 契约测试：覆盖 `validate_counts.py --help` 与缺失输入的失败退出码
+- 新增离线集成链路测试：`dedupe -> select -> word_budget`，断言关键产物存在与结构稳定
+- 在 `README.md` 补充 pytest 运行方式，并将 `pytest` 加入 `requirements.txt`
+
 ### Fixed（检索与摘要补齐的可控性/可复现性 - 2026-01-25）
 
 - `multi_query_search.py`：未提供查询时不再静默回退到硬编码查询，改为直接报错（避免误跑无关主题）

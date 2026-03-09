@@ -1,0 +1,4 @@
+{"id":"p1","doi":"10.1000/a","title":"Paper A","year":2021,"score":9.1,"subtopic":"模型","abstract":"这是一段足够长的摘要内容，用于通过最小摘要长度检查。"}
+{"id":"p2","doi":"10.1000/b","title":"Paper B","year":2020,"score":8.4,"subtopic":"模型","abstract":"This is a sufficiently long abstract to satisfy selection constraints in offline tests."}
+{"id":"p3","doi":"10.1000/c","title":"Paper C","year":2022,"score":7.9,"subtopic":"数据","abstract":"Another long abstract for integration testing without any external API dependency."}
+{"id":"p3-dup","doi":"10.1000/c","title":"Paper C Duplicate","year":2022,"score":1.0,"subtopic":"数据","abstract":"duplicate"}

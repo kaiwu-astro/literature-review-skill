@@ -295,3 +295,19 @@ python scripts/multi_language.py --tex-file review.tex --restore
 ### 详细文档
 
 详见 [`skill-references/multilingual-guide.md`](skill-references/multilingual-guide.md)
+
+## 测试（离线）
+
+本仓库已引入 `pytest` 作为正式测试框架，并采用分层目录：
+
+- `tests/unit/`：纯函数/规则测试
+- `tests/cli/`：CLI 参数与退出码契约测试
+- `tests/integration/`：离线脚本链路联调测试
+- `tests/fixtures/`：固定测试输入样本
+
+建议本地最小回归命令：
+
+```bash
+python3 -m py_compile scripts/*.py
+pytest -q tests/unit tests/cli
+```
