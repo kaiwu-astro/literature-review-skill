@@ -83,7 +83,7 @@ def _count_subsections_markdown(content: str) -> dict:
     if ref_m:
         content = content[:ref_m.start()]
 
-    heading_pattern = re.compile(r"^(#{1,3})\s+(.+)$", re.MULTILINE)
+    heading_pattern = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
     matches = heading_pattern.findall(content)
 
     cleaned_sections = []
