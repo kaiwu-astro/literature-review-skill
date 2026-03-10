@@ -25,6 +25,7 @@ HIDDEN = ".systematic-literature-review"
 
 FINAL_SUFFIXES = (
     "_工作条件.md",
+    "_review.md",
     "_review.tex",
     "_参考文献.bib",
     "_review.pdf",

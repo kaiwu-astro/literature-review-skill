@@ -36,10 +36,18 @@ STANDARD_SECTIONS = {
 }
 
 
-def count_subsections(tex_file: Path) -> dict:
-    """统计子主题 section 数量"""
-    content = tex_file.read_text(encoding="utf-8")
+def count_subsections(input_file: Path) -> dict:
+    """统计子主题 section 数量（支持 .tex 和 .md）"""
+    content = input_file.read_text(encoding="utf-8")
+    is_markdown = input_file.suffix.lower() == ".md"
 
+    if is_markdown:
+        return _count_subsections_markdown(content)
+    return _count_subsections_tex(content)
+
+
+def _count_subsections_tex(content: str) -> dict:
+    """统计 LaTeX 子主题 section 数量"""
     # 匹配 \section{...} 或 \section*{...}
     section_pattern = r"\\section\*?\{([^}]+)\}"
     matches = re.findall(section_pattern, content)
@@ -47,22 +55,15 @@ def count_subsections(tex_file: Path) -> dict:
     # 清理标题（去除空白、编号）
     cleaned_sections = []
     for m in matches:
-        # 去除前后空白
         title = m.strip()
-        # 去除 TeX 标记（如 \label{}）
         title = re.sub(r"\\label\{[^}]+\}", "", title)
         title = title.strip()
-
-        # 转小写用于标准章节判断
         title_lower = title.lower()
-
-        # 检查是否是标准章节
         is_standard = False
         for std in STANDARD_SECTIONS:
             if std.lower() in title_lower or title_lower in std.lower():
                 is_standard = True
                 break
-
         if not is_standard:
             cleaned_sections.append(title)
 
@@ -74,21 +75,61 @@ def count_subsections(tex_file: Path) -> dict:
     }
 
 
+def _count_subsections_markdown(content: str) -> dict:
+    """统计 Markdown 子主题标题数量（## 及以下级别标题，排除 H1 文档标题）"""
+    # 去 ## References 及之后
+    ref_pat = re.compile(r"^##\s+References\b", re.IGNORECASE | re.MULTILINE)
+    ref_m = ref_pat.search(content)
+    if ref_m:
+        content = content[:ref_m.start()]
+
+    heading_pattern = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
+    matches = heading_pattern.findall(content)
+
+    cleaned_sections = []
+    total_count = 0
+    for hashes, title in matches:
+        title = title.strip()
+        level = len(hashes)
+        # H1 (level=1) 视为文档标题，不计入章节/子主题统计
+        if level == 1:
+            continue
+        total_count += 1
+        title_lower = title.lower()
+        is_standard = False
+        for std in STANDARD_SECTIONS:
+            if std.lower() in title_lower or title_lower in std.lower():
+                is_standard = True
+                break
+        if not is_standard:
+            cleaned_sections.append(title)
+
+    return {
+        "total_sections": total_count,
+        "standard_sections": total_count - len(cleaned_sections),
+        "subtopic_sections": len(cleaned_sections),
+        "subtopic_list": cleaned_sections,
+    }
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="验证综述正文的子主题数量")
-    parser.add_argument("--tex", required=True, type=Path, help="LaTeX 综述文件路径")
+    parser = argparse.ArgumentParser(description="验证综述正文的子主题数量（支持 .tex 和 .md）")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--tex", type=Path, help="LaTeX 综述文件路径")
+    group.add_argument("--md", type=Path, help="Markdown 综述文件路径")
     parser.add_argument("--min-subtopics", type=int, default=3, help="最小子主题数量（默认3）")
     parser.add_argument("--max-subtopics", type=int, default=7, help="最大子主题数量（默认7）")
     args = parser.parse_args()
 
-    if not args.tex.exists():
-        print(f"✗ 文件不存在: {args.tex}", file=sys.stderr)
+    input_file = args.md if args.md is not None else args.tex
+    if not input_file.exists():
+        print(f"✗ 文件不存在: {input_file}", file=sys.stderr)
         return 1
 
-    result = count_subsections(args.tex)
+    result = count_subsections(input_file)
 
     print(f"\n📊 子主题数量验证报告")
-    print(f"   文件: {args.tex.name}")
+    print(f"   文件: {input_file.name}")
     print(f"   总 section 数: {result['total_sections']}")
     print(f"   标准章节数: {result['standard_sections']}")
     print(f"   子主题 section 数: {result['subtopic_sections']}")

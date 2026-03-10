@@ -21,6 +21,7 @@ from typing import List
 # 允许存在于工作目录根部的文件模式（最终交付物）
 ALLOWED_PATTERNS = [
     "*_工作条件.md",
+    "*_review.md",
     "*_review.tex",
     "*_参考文献.bib",
     "*_review.pdf",
