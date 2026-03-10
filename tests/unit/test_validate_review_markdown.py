@@ -110,7 +110,48 @@ def test_check_required_sections_all_present():
     assert info["outlook"] is True
 
 
-def test_check_required_sections_missing_abstract():
+def test_check_required_sections_h1_title_not_subtopic():
+    """H1 文档标题不应被计入子主题段落（P1 修复验证）"""
+    md = "\n".join([
+        "# 文献综述标题",  # H1 - document title, must NOT count as subtopic
+        "## Abstract",
+        "Some abstract text",
+        "## Introduction",
+        "Intro text",
+        "## Deep Learning",  # This IS a subtopic
+        "Body text",
+        "## Discussion",
+        "Discussion text",
+        "## Conclusion",
+        "Conclusion text",
+    ])
+    errors, info = vrm.check_required_sections(md)
+    assert len(errors) == 0, f"Unexpected errors: {errors}"
+    # "文献综述标题" (H1) should NOT appear in body_titles
+    assert "文献综述标题" not in info["body_titles"]
+    # "Deep Learning" (H2) SHOULD appear
+    assert "Deep Learning" in info["body_titles"]
+    assert info["body_count"] == 1
+
+
+def test_check_required_sections_only_h1_and_standard_fails():
+    """只有 H1 标题和标准章节时，应报缺少子主题"""
+    md = "\n".join([
+        "# My Review Title",  # H1 - document title only
+        "## Abstract",
+        "Abstract text",
+        "## Introduction",
+        "Intro text",
+        "## Discussion",
+        "Discussion text",
+        "## Conclusion",
+        "Conclusion text",
+    ])
+    errors, info = vrm.check_required_sections(md)
+    assert any("子主题" in e for e in errors)
+    assert info["body_count"] == 0
+
+
     md = "\n".join([
         "## Introduction",
         "Text",

@@ -76,7 +76,7 @@ def _count_subsections_tex(content: str) -> dict:
 
 
 def _count_subsections_markdown(content: str) -> dict:
-    """统计 Markdown 子主题标题数量（## 级别标题）"""
+    """统计 Markdown 子主题标题数量（## 及以下级别标题，排除 H1 文档标题）"""
     # 去 ## References 及之后
     ref_pat = re.compile(r"^##\s+References\b", re.IGNORECASE | re.MULTILINE)
     ref_m = ref_pat.search(content)
@@ -88,8 +88,12 @@ def _count_subsections_markdown(content: str) -> dict:
 
     cleaned_sections = []
     total_count = 0
-    for _hashes, title in matches:
+    for hashes, title in matches:
         title = title.strip()
+        level = len(hashes)
+        # H1 (level=1) 视为文档标题，不计入章节/子主题统计
+        if level == 1:
+            continue
         total_count += 1
         title_lower = title.lower()
         is_standard = False

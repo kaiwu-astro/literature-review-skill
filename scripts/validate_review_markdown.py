@@ -18,6 +18,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import unquote as _url_unquote
 
 
 def _read(p: Path) -> str:
@@ -155,14 +156,15 @@ def check_required_sections(md: str) -> Tuple[List[str], Dict[str, Any]]:
     if not has_intro:
         errors.append("缺少引言（引言/Introduction）")
 
-    # 子主题段落：除标准章节外的标题
+    # 子主题段落：除标准章节外的标题（H1 视为文档标题，不计入章节）
     standard_keywords = (
         list(musts["abstract"]) + list(musts["intro"]) + list(musts["discussion"])
         + list(musts["outlook"]) + ["References", "参考文献"]
     )
     body_titles = [
-        t for t in heading_titles
-        if not any(k.lower() in t.lower() for k in standard_keywords)
+        t for level, t in headings
+        if level >= 2  # H1 (level=1) 视为文档标题，排除在外
+        and not any(k.lower() in t.lower() for k in standard_keywords)
     ]
     if len(body_titles) < 1:
         errors.append("缺少至少 1 个子主题段落")
@@ -203,13 +205,15 @@ def validate_harvard_display(display: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def _normalize_doi_for_compare(doi: str) -> str:
-    """规范化 DOI 用于比较"""
+    """规范化 DOI 用于比较（URL 解码，去前缀，小写）"""
     doi = doi.strip().lower().rstrip("/")
     for prefix in ("https://doi.org/", "http://doi.org/", "doi:", "doi: "):
         if doi.startswith(prefix):
             doi = doi[len(prefix):]
             break
-    return doi.strip()
+    # URL 解码（处理 %28 → ( 等编码字符），使与 .bib 中的原始 DOI 可比较
+    doi = _url_unquote(doi).strip()
+    return doi
 
 
 def load_reference_dois(bib_path: Optional[Path], jsonl_path: Optional[Path]) -> Set[str]:

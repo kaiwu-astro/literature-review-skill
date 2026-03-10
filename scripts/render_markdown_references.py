@@ -18,10 +18,15 @@ import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote as _url_quote
 
 
 def _normalize_doi(doi: Optional[str]) -> Optional[str]:
-    """规范化 DOI：确保以 https://doi.org/ 开头"""
+    """规范化 DOI：确保以 https://doi.org/ 开头，并对路径部分做 URL 编码。
+
+    对 DOI 路径做 URL 编码（保留 `/` 和 `#` 分隔符），以处理含 `)` 等保留字符的
+    legacy SICI 风格 DOI，避免生成的 Markdown 链接截断。
+    """
     if not doi:
         return None
     doi = doi.strip()
@@ -35,7 +40,9 @@ def _normalize_doi(doi: Optional[str]) -> Optional[str]:
     doi = doi.strip().strip("/")
     if not doi:
         return None
-    return f"https://doi.org/{doi}"
+    # URL 编码：保留 / 和 # 作为路径/片段分隔符，其余保留字符需编码
+    encoded = _url_quote(doi, safe="/:@!$&'*+,;=#~.-_")
+    return f"https://doi.org/{encoded}"
 
 
 def _format_authors_harvard(authors: Any) -> str:

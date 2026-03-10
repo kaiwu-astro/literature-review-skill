@@ -29,9 +29,10 @@ def test_count_subsections_markdown(tmp_path: Path):
     md_path.write_text(md, encoding="utf-8")
 
     result = vst.count_subsections(md_path)
-    assert result["subtopic_sections"] == 4  # Review Title, Deep Learning, NLP, CV
+    assert result["subtopic_sections"] == 3  # Deep Learning, NLP, CV (H1 "Review Title" excluded)
     assert "Deep Learning" in result["subtopic_list"]
     assert "Natural Language Processing" in result["subtopic_list"]
+    assert "Review Title" not in result["subtopic_list"]
 
 
 def test_count_subsections_tex(tmp_path: Path):

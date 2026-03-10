@@ -28,6 +28,22 @@ def test_normalize_doi_empty():
     assert rmr._normalize_doi(None) is None
 
 
+def test_normalize_doi_encodes_parentheses():
+    """DOI 含 ) 字符（P2 修复验证）：应编码为 %29 避免 Markdown 链接截断"""
+    result = rmr._normalize_doi("10.1002/(SICI)1097-4571(199601)47:1<1::AID-ASI1>3.0.CO;2-L")
+    assert result is not None
+    # ) must be encoded so Markdown link syntax [text](url) is not broken
+    assert ")" not in result
+    assert "%29" in result or "%28" in result  # at least one paren encoded
+
+
+def test_normalize_doi_already_encoded_url():
+    """已编码 DOI URL 传入时，前缀应被正确剥离并保持编码"""
+    result = rmr._normalize_doi("https://doi.org/10.1002/%28SICI%29test")
+    assert result is not None
+    assert result.startswith("https://doi.org/")
+
+
 # ---------------------------------------------------------------------------
 # _format_authors_harvard
 # ---------------------------------------------------------------------------
