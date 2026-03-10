@@ -2,7 +2,7 @@
 """
 render_markdown_references.py - 为 Markdown 综述生成 Harvard 引用映射与 References 段落
 
-输入：selected_papers.jsonl 或 .bib
+输入：selected_papers.jsonl
 输出：
   - 引用映射 JSON（cite_key → Harvard 显示文本 + DOI 链接）
   - ## References 段落（可直接附加到 Markdown 正文末尾）
